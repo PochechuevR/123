@@ -1,377 +1,152 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <title>Web3 To-Do List</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ToDo Web3</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
   <style>
     body {
+      background-color: #121212;
+      color: #fff;
       font-family: Arial, sans-serif;
-      padding: 15px;
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 400px;
     }
     h1 {
-      color: #333;
+      font-size: 22px;
       text-align: center;
-    }
-    .task-input {
-      display: flex;
       margin-bottom: 20px;
     }
-    #newTask {
-      flex: 1;
+    input {
+      width: 100%;
       padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #2a2a2a;
+      color: #fff;
+      font-size: 16px;
     }
-    button {
-      padding: 10px 15px;
-      background-color: #007bff;
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #00A8FF;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 12px;
+      font-size: 16px;
       cursor: pointer;
-      margin-left: 10px;
+      margin-bottom: 15px;
     }
-    button:hover {
-      background-color: #0056b3;
+    .btn:hover {
+      background: #0088CC;
     }
     .task {
-      background: white;
-      padding: 10px 15px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: #2A2A2A;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .task.completed {
-      opacity: 0.7;
       text-decoration: line-through;
+      opacity: 0.6;
     }
-    .task-actions button {
-      margin-left: 5px;
-      padding: 5px 10px;
-      font-size: 12px;
+    .actions button {
+      background: none;
+      border: none;
+      color: #FF5252;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
     }
-    #wallet-section {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    #walletAddress {
-      font-family: monospace;
-      word-break: break-all;
-      margin-top: 10px;
-      color: #555;
-    }
-    .hidden {
-      display: none;
-    }
-    #loading {
-      text-align: center;
-      margin: 20px 0;
+    .complete-btn {
+      color: #00FF90;
     }
   </style>
 </head>
 <body>
-  <h1>Web3 To-Do List</h1>
-  
-  <div id="wallet-section">
-    <button id="connectWallet">🔗 Подключить кошелек</button>
-    <div id="walletAddress"></div>
-  </div>
-  
-  <div id="task-section" class="hidden">
-    <div class="task-input">
-      <input type="text" id="newTask" placeholder="Введите новую задачу...">
-      <button id="addTask">Добавить</button>
-    </div>
-    
-    <div id="loading">Загрузка задач...</div>
-    <div id="tasks"></div>
+  <div class="container">
+    <h1>ToDo Web3</h1>
+    <input type="text" id="taskInput" placeholder="Новая задача..." />
+    <button class="btn" onclick="addTask()">Добавить</button>
+    <div id="taskList"></div>
   </div>
 
   <script>
-    // Конфигурация
-    const CONTRACT_ADDRESS = '0xYOUR_CONTRACT_ADDRESS';
-    const CONTRACT_ABI = [
-      {
-        "inputs": [],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "user",
-            "type": "address"
-          },
-          {
-            "indexed": false,
-            "internalType": "uint256",
-            "name": "taskId",
-            "type": "uint256"
-          },
-          {
-            "indexed": false,
-            "internalType": "string",
-            "name": "content",
-            "type": "string"
-          }
-        ],
-        "name": "TaskAdded",
-        "type": "event"
-      },
-      {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "user",
-            "type": "address"
-          },
-          {
-            "indexed": false,
-            "internalType": "uint256",
-            "name": "taskId",
-            "type": "uint256"
-          }
-        ],
-        "name": "TaskCompleted",
-        "type": "event"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "_content",
-            "type": "string"
-          }
-        ],
-        "name": "addTask",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "_taskId",
-            "type": "uint256"
-          }
-        ],
-        "name": "completeTask",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "getTasks",
-        "outputs": [
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "id",
-                "type": "uint256"
-              },
-              {
-                "internalType": "string",
-                "name": "content",
-                "type": "string"
-              },
-              {
-                "internalType": "bool",
-                "name": "completed",
-                "type": "bool"
-              },
-              {
-                "internalType": "uint256",
-                "name": "createdAt",
-                "type": "uint256"
-              }
-            ],
-            "internalType": "struct Web3TodoList.Task[]",
-            "name": "",
-            "type": "tuple[]"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "name": "taskCount",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      }
-    ];
-    const RPC_URL = 'https://polygon-rpc.com';
-
-    // Инициализация
-    let web3;
-    let contract;
-    let walletAddress;
-    
-    // Инициализация Telegram WebApp
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
-    
-    // DOM элементы
-    const connectWalletBtn = document.getElementById('connectWallet');
-    const walletAddressEl = document.getElementById('walletAddress');
-    const taskSection = document.getElementById('task-section');
-    const addTaskBtn = document.getElementById('addTask');
-    const newTaskInput = document.getElementById('newTask');
-    const tasksContainer = document.getElementById('tasks');
-    const loadingEl = document.getElementById('loading');
-    
-    // Обработчики событий
-    connectWalletBtn.addEventListener('click', connectWallet);
-    addTaskBtn.addEventListener('click', addTask);
-    
-    // Проверка, есть ли MetaMask
-    if (typeof window.ethereum === 'undefined') {
-      connectWalletBtn.textContent = 'Установите MetaMask';
-      connectWalletBtn.disabled = true;
-    }
-    
-    // Подключение кошелька
-    async function connectWallet() {
-      try {
-        connectWalletBtn.disabled = true;
-        connectWalletBtn.textContent = 'Подключение...';
-        
-        // Запрос доступа к аккаунтам
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        walletAddress = accounts[0];
-        
-        // Инициализация Web3
-        web3 = new Web3(window.ethereum);
-        
-        // Инициализация контракта
-        contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-        
-        // Обновление UI
-        walletAddressEl.textContent = `Кошелек: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`;
-        taskSection.classList.remove('hidden');
-        connectWalletBtn.style.display = 'none';
-        
-        // Загрузка задач
-        loadTasks();
-        
-        // Слушаем изменения аккаунтов
-        window.ethereum.on('accountsChanged', (accounts) => {
-          if (accounts.length === 0) {
-            // Кошелек отключен
-            location.reload();
-          } else {
-            walletAddress = accounts[0];
-            walletAddressEl.textContent = `Кошелек: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`;
-            loadTasks();
-          }
-        });
-        
-      } catch (error) {
-        console.error('Ошибка подключения кошелька:', error);
-        connectWalletBtn.disabled = false;
-        connectWalletBtn.textContent = '🔗 Подключить кошелек';
-        alert('Ошибка подключения кошелька: ' + error.message);
-      }
-    }
-    
-    // Загрузка задач
-    async function loadTasks() {
-      try {
-        loadingEl.style.display = 'block';
-        tasksContainer.innerHTML = '';
-        
-        const tasks = await contract.methods.getTasks().call({ from: walletAddress });
-        
-        if (tasks.length === 0) {
-          tasksContainer.innerHTML = '<p>У вас пока нет задач. Добавьте первую!</p>';
-        } else {
-          tasks.forEach((task, index) => {
-            const taskEl = document.createElement('div');
-            taskEl.className = `task ${task.completed ? 'completed' : ''}`;
-            taskEl.innerHTML = `
-              <span>${task.content}</span>
-              <div class="task-actions">
-                ${!task.completed ? `<button onclick="completeTask(${task.id})">✓ Выполнено</button>` : ''}
-              </div>
-            `;
-            tasksContainer.appendChild(taskEl);
-          });
-        }
-        
-        loadingEl.style.display = 'none';
-      } catch (error) {
-        console.error('Ошибка загрузки задач:', error);
-        tasksContainer.innerHTML = '<p>Ошибка загрузки задач. Попробуйте позже.</p>';
-        loadingEl.style.display = 'none';
-      }
-    }
-    
-    // Добавление задачи
-    async function addTask() {
-      const taskText = newTaskInput.value.trim();
-      if (!taskText) return;
-      
-      try {
-        addTaskBtn.disabled = true;
-        addTaskBtn.textContent = 'Добавление...';
-        
-        await contract.methods.addTask(taskText).send({ from: walletAddress });
-        
-        newTaskInput.value = '';
-        loadTasks();
-      } catch (error) {
-        console.error('Ошибка добавления задачи:', error);
-        alert('Ошибка добавления задачи: ' + error.message);
-      } finally {
-        addTaskBtn.disabled = false;
-        addTaskBtn.textContent = 'Добавить';
-      }
-    }
-    
-    // Отметка задачи как выполненной
-    window.completeTask = async function(taskId) {
-      try {
-        await contract.methods.completeTask(taskId).send({ from: walletAddress });
-        loadTasks();
-      } catch (error) {
-        console.error('Ошибка выполнения задачи:', error);
-        alert('Ошибка выполнения задачи: ' + error.message);
-      }
+    // Firebase конфиг
+    const firebaseConfig = {
+      apiKey: "AIzaSyANHM115TxFfva5d-oMDKAtPmBF_59OgTA",
+      authDomain: "financeai-e9f18.firebaseapp.com",
+      databaseURL: "https://financeai-e9f18-default-rtdb.firebaseio.com",
+      projectId: "financeai-e9f18",
+      storageBucket: "financeai-e9f18.appspot.com",
+      messagingSenderId: "71690881541",
+      appId: "1:71690881541:web:c68e6ecf51082dfbedaa6c",
+      measurementId: "G-S9T1BR9SEL"
     };
-    
-    // Автоматическое подключение, если кошелек уже подключен
-    if (window.ethereum && window.ethereum.selectedAddress) {
-      connectWallet();
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref("tasks");
+
+    // Добавление задачи
+    function addTask() {
+      const taskText = document.getElementById("taskInput").value.trim();
+      if (taskText === "") return;
+
+      const newTaskRef = db.push();
+      newTaskRef.set({ text: taskText, completed: false });
+      document.getElementById("taskInput").value = "";
     }
+
+    // Обновление списка
+    function renderTasks(snapshot) {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "";
+
+      snapshot.forEach(child => {
+        const task = child.val();
+        const key = child.key;
+
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task" + (task.completed ? " completed" : "");
+        taskDiv.innerHTML = `
+          <span>${task.text}</span>
+          <div class="actions">
+            <button class="complete-btn" onclick="toggleComplete('${key}', ${!task.completed})">✔️</button>
+            <button onclick="deleteTask('${key}')">❌</button>
+          </div>
+        `;
+        taskList.appendChild(taskDiv);
+      });
+    }
+
+    // Изменить статус выполнения
+    function toggleComplete(key, completed) {
+      db.child(key).update({ completed });
+    }
+
+    // Удалить задачу
+    function deleteTask(key) {
+      db.child(key).remove();
+    }
+
+    // Отслеживание изменений в БД
+    db.on("value", renderTasks);
   </script>
 </body>
 </html>
