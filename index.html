@@ -92,7 +92,7 @@
     const firebaseConfig = {
       apiKey: "AIzaSyANHM115TxFfva5d-oMDKAtPmBF_59OgTA",
       authDomain: "financeai-e9f18.firebaseapp.com",
-      databaseURL: "https://financeai-e9f18-default-rtdb.firebaseio.com",
+      databaseURL: "https://todoapp-e0f58-default-rtdb.europe-west1.firebasedatabase.app/",
       projectId: "financeai-e9f18",
       storageBucket: "financeai-e9f18.appspot.com",
       messagingSenderId: "71690881541",
@@ -111,8 +111,9 @@
       const newTaskRef = db.push();
       newTaskRef.set({ text: taskText, completed: false });
       document.getElementById("taskInput").value = "";
+      console.log("Добавляем по адресу:", newTaskRef.toString());
     }
-
+    
     // 3. Отрисовка задач
     function renderTasks(snapshot) {
       const taskList = document.getElementById("taskList");
