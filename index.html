@@ -1,389 +1,151 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ToDo Web3</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
   <style>
-    :root {
-      --bg-color: #121212;
-      --container-color: #1e1e1e;
-      --card-color: #2a2a2a;
-      --primary: #00A8FF;
-      --primary-hover: #0088CC;
-      --danger: #FF5252;
-      --success: #00FF90;
-      --text: #fff;
-      --text-secondary: rgba(255, 255, 255, 0.6);
-    }
-    
     body {
-      background-color: var(--bg-color);
-      color: var(--text);
-      font-family: 'Segoe UI', Arial, sans-serif;
+      background-color: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
+      align-items: center;
       min-height: 100vh;
-      padding: 20px 0;
-      margin: 0;
     }
-    
     .container {
-      background: var(--container-color);
-      padding: 25px;
-      border-radius: 16px;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 20px;
       width: 90%;
-      max-width: 450px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
     }
-    
     h1 {
-      font-size: 24px;
+      font-size: 22px;
       text-align: center;
-      margin: 0 0 25px 0;
-      font-weight: 600;
-    }
-    
-    .input-group {
-      display: flex;
-      gap: 10px;
       margin-bottom: 20px;
     }
-    
     input {
-      flex: 1;
-      padding: 12px 15px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      background: var(--card-color);
-      color: var(--text);
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #2a2a2a;
+      color: #fff;
       font-size: 16px;
-      transition: border-color 0.2s;
     }
-    
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    
     .btn {
-      padding: 12px 20px;
-      background: var(--primary);
+      width: 100%;
+      padding: 12px;
+      background: #00A8FF;
       color: white;
       border: none;
       border-radius: 12px;
       font-size: 16px;
-      font-weight: 500;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      white-space: nowrap;
+      margin-bottom: 15px;
     }
-    
     .btn:hover {
-      background: var(--primary-hover);
+      background: #0088CC;
     }
-    
-    .btn:active {
-      transform: scale(0.98);
-    }
-    
-    .btn-danger {
-      background: var(--danger);
-    }
-    
-    .task-list {
-      margin-top: 20px;
-      max-height: 60vh;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: var(--primary) var(--container-color);
-    }
-    
-    .task-list::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    .task-list::-webkit-scrollbar-track {
-      background: var(--container-color);
-    }
-    
-    .task-list::-webkit-scrollbar-thumb {
-      background-color: var(--primary);
-      border-radius: 3px;
-    }
-    
     .task {
-      background: var(--card-color);
-      padding: 14px 16px;
-      margin: 8px 0;
-      border-radius: 12px;
+      background: #2A2A2A;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: all 0.2s;
     }
-    
-    .task:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    
     .task.completed {
-      opacity: 0.7;
-    }
-    
-    .task.completed .task-text {
       text-decoration: line-through;
-      color: var(--text-secondary);
+      opacity: 0.6;
     }
-    
-    .task-text {
-      flex: 1;
-      margin-right: 15px;
-      word-break: break-word;
-    }
-    
-    .actions {
-      display: flex;
-      gap: 8px;
-    }
-    
-    .action-btn {
+    .actions button {
       background: none;
       border: none;
+      color: #FF5252;
       cursor: pointer;
-      font-size: 18px;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
+      font-size: 14px;
+      margin-left: 10px;
     }
-    
-    .action-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-    
     .complete-btn {
-      color: var(--success);
-    }
-    
-    .delete-btn {
-      color: var(--danger);
-    }
-    
-    .empty-state {
-      text-align: center;
-      padding: 30px 0;
-      color: var(--text-secondary);
-    }
-    
-    @media (max-width: 480px) {
-      .container {
-        padding: 20px 15px;
-        width: 95%;
-      }
-      
-      .input-group {
-        flex-direction: column;
-      }
+      color: #00FF90;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📝 Список дел</h1>
-    <div class="input-group">
-      <input type="text" id="taskInput" placeholder="Новая задача..." autocomplete="off" />
-      <button class="btn" id="addBtn">Добавить</button>
-    </div>
-    <div class="task-list" id="taskList">
-      <div class="empty-state">Нет задач. Добавьте первую!</div>
-    </div>
+    <h1>Список дел</h1>
+    <input type="text" id="taskInput" placeholder="Новая задача..." />
+    <button class="btn" onclick="addTask()">Добавить</button>
+    <div id="taskList"></div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Инициализация Firebase
-      const firebaseConfig = {
- apiKey: "AIzaSyCLFpM_rZVbVMZDMe7EO8421usT3D3UFZI",
- authDomain: "todoapp-e0f58.firebaseapp.com",
- databaseURL: "https://todoapp-e0f58-default-rtdb.europe-west1.firebasedatabase.app",
- projectId: "todoapp-e0f58",
- storageBucket: "todoapp-e0f58.firebasestorage.app",
- messagingSenderId: "820376409914",
- appId: "1:820376409914:web:9b81e17f0571c1b1bc2203",
- measurementId: "G-C617TCZBH4"
-};
+    // 1. Настройка Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyANHM115TxFfva5d-oMDKAtPmBF_59OgTA",
+      authDomain: "financeai-e9f18.firebaseapp.com",
+      databaseURL: "https://financeai-e9f18-default-rtdb.firebaseio.com",
+      projectId: "financeai-e9f18",
+      storageBucket: "financeai-e9f18.appspot.com",
+      messagingSenderId: "71690881541",
+      appId: "1:71690881541:web:c68e6ecf51082dfbedaa6c",
+      measurementId: "G-S9T1BR9SEL"
+    };
 
-      // Проверка на подключение к Firebase
-      try {
-        firebase.initializeApp(firebaseConfig);
-      } catch (error) {
-        console.error("Firebase initialization error", error);
-        showError("Ошибка подключения к базе данных");
-      }
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref("tasks");
 
-      const db = firebase.database().ref("tasks");
-      const taskInput = document.getElementById('taskInput');
-      const addBtn = document.getElementById('addBtn');
-      const taskList = document.getElementById('taskList');
+    // 2. Добавление задачи
+    function addTask() {
+      const taskText = document.getElementById("taskInput").value.trim();
+      if (taskText === "") return;
 
-      // Обработчики событий
-      addBtn.addEventListener('click', addTask);
-      taskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addTask();
-      });
+      const newTaskRef = db.push();
+      newTaskRef.set({ text: taskText, completed: false });
+      document.getElementById("taskInput").value = "";
+    }
 
-      // Добавление задачи
-      function addTask() {
-        const taskText = taskInput.value.trim();
-        if (!taskText) {
-          showError("Введите текст задачи");
-          return;
-        }
+    // 3. Отрисовка задач
+    function renderTasks(snapshot) {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "";
 
-        addBtn.disabled = true;
-        addBtn.textContent = "Добавляем...";
-        
-        const newTask = {
-          text: taskText,
-          completed: false,
-          createdAt: firebase.database.ServerValue.TIMESTAMP
-        };
+      snapshot.forEach(child => {
+        const task = child.val();
+        const key = child.key;
 
-        db.push(newTask)
-          .then(() => {
-            taskInput.value = "";
-            taskInput.focus();
-          })
-          .catch((error) => {
-            showError("Не удалось добавить задачу");
-            console.error("Error adding task:", error);
-          })
-          .finally(() => {
-            addBtn.disabled = false;
-            addBtn.textContent = "Добавить";
-          });
-      }
-
-      // Отображение задач
-      function renderTasks(snapshot) {
-        if (!snapshot.exists()) {
-          taskList.innerHTML = '<div class="empty-state">Нет задач. Добавьте первую!</div>';
-          return;
-        }
-
-        let tasks = [];
-        snapshot.forEach(child => {
-          tasks.push({
-            key: child.key,
-            ...child.val()
-          });
-        });
-
-        firebase.initializeApp({
-  ...firebaseConfig,
-  databaseURL: "https://financeai-e9f18-default-rtdb.firebaseio.com"
-});
-        // Сортировка по дате создания (новые сверху)
-        tasks.sort((a, b) => b.createdAt - a.createdAt);
-
-        taskList.innerHTML = tasks.map(task => `
-          <div class="task ${task.completed ? 'completed' : ''}" data-id="${task.key}">
-            <div class="task-text">${escapeHtml(task.text)}</div>
-            <div class="actions">
-              <button class="action-btn complete-btn" title="${task.completed ? 'Вернуть' : 'Завершить'}">
-                ${task.completed ? '↩️' : '✔️'}
-              </button>
-              <button class="action-btn delete-btn" title="Удалить">❌</button>
-            </div>
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task" + (task.completed ? " completed" : "");
+        taskDiv.innerHTML = `
+          <span>${task.text}</span>
+          <div class="actions">
+            <button class="complete-btn" onclick="toggleComplete('${key}', ${!task.completed})">✔️</button>
+            <button onclick="deleteTask('${key}')">❌</button>
           </div>
-        `).join('');
-
-        // Добавляем обработчики событий для новых элементов
-        document.querySelectorAll('.task').forEach(taskEl => {
-          const taskId = taskEl.dataset.id;
-          taskEl.querySelector('.complete-btn').addEventListener('click', () => {
-            toggleComplete(taskId);
-          });
-          taskEl.querySelector('.delete-btn').addEventListener('click', () => {
-            deleteTask(taskId);
-          });
-        });
-      }
-
-      // Переключение статуса задачи
-      function toggleComplete(taskId) {
-        const taskRef = db.child(taskId);
-        taskRef.transaction(task => {
-          if (task) {
-            task.completed = !task.completed;
-          }
-          return task;
-        }).catch(error => {
-          showError("Не удалось обновить задачу");
-          console.error("Error toggling task:", error);
-        });
-      }
-
-      // Удаление задачи
-      function deleteTask(taskId) {
-        if (!confirm("Удалить эту задачу?")) return;
-        
-        db.child(taskId).remove()
-          .catch(error => {
-            showError("Не удалось удалить задачу");
-            console.error("Error deleting task:", error);
-          });
-      }
-
-      // Показ ошибок
-      function showError(message) {
-        const errorEl = document.createElement('div');
-        errorEl.className = 'error-message';
-        errorEl.textContent = message;
-        errorEl.style.color = 'var(--danger)';
-        errorEl.style.margin = '10px 0';
-        errorEl.style.textAlign = 'center';
-        
-        const container = document.querySelector('.container');
-        container.insertBefore(errorEl, taskList);
-        
-        setTimeout(() => {
-          errorEl.remove();
-        }, 3000);
-      }
-
-      // Экранирование HTML
-      function escapeHtml(unsafe) {
-        return unsafe
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      }
-
-      // Отслеживание изменений в БД
-      db.on("value", renderTasks, (error) => {
-        showError("Ошибка загрузки задач");
-        console.error("Database error:", error);
+        `;
+        taskList.appendChild(taskDiv);
       });
+    }
 
-      // Инициализация Telegram Web App
-      if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        Telegram.WebApp.enableClosingConfirmation();
-      }
-    });
+    // 4. Завершение/удаление задачи
+    function toggleComplete(key, completed) {
+      db.child(key).update({ completed });
+    }
+
+    function deleteTask(key) {
+      db.child(key).remove();
+    }
+
+    // 5. Слушатель изменений
+    db.on("value", renderTasks);
   </script>
 </body>
 </html>
