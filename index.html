@@ -109,7 +109,7 @@
       if (taskText === "") return;
 
       const newTaskRef = db.push();
-      newTaskRef.set({ text: taskText, completed: false });
+      newTaskRef.set({ text: taskText, completed: false, description: "" });
       document.getElementById("taskInput").value = "";
       console.log("Добавляем по адресу:", newTaskRef.toString());
     }
@@ -126,15 +126,19 @@
         const taskDiv = document.createElement("div");
         taskDiv.className = "task" + (task.completed ? " completed" : "");
         taskDiv.innerHTML = `
+          <div>
           <span>${task.text}</span>
+          ${task.description ? <div style="font-size: 12px; color: #aaa;">${task.description}</div> : ""}
+        </div>
           <div class="actions">
             <button class="complete-btn" onclick="toggleComplete('${key}', ${!task.completed})">✔️</button>
+            <button onclick="editDescription('${key}', '${task.description ? task.description.replace(/'/g, "\\'") : ''}')">✏️</button>
             <button onclick="deleteTask('${key}')">❌</button>
-          </div>
-        `;
-        taskList.appendChild(taskDiv);
-      });
-    }
+        </div>
+      `;
+      taskList.appendChild(taskDiv);
+    });
+  }
 
     // 4. Завершение/удаление задачи
     function toggleComplete(key, completed) {
@@ -143,6 +147,12 @@
 
     function deleteTask(key) {
       db.child(key).remove();
+    }
+
+    function editDescription(key, currentDescription) {
+      const newDesc = prompt("Введите описание задачи:", currentDescription);
+      if (newDesc !== null) {
+        db.child(key).update({ description: newDesc.trim() });
     }
     
     // 5. Слушатель изменений
