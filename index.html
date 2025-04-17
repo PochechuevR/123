@@ -98,7 +98,7 @@
       messagingSenderId: "820376409914",
       appId: "1:820376409914:web:9b81e17f0571c1b1bc2203",
       measurementId: "G-C617TCZBH4"
-    };
+   };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database().ref("tasks");
@@ -109,10 +109,11 @@
       if (taskText === "") return;
 
       const newTaskRef = db.push();
-      newTaskRef.set({ text: taskText, completed: false, description: "" });
+      newTaskRef.set({ text: taskText, completed: false });
       document.getElementById("taskInput").value = "";
+      console.log("Добавляем по адресу:", newTaskRef.toString());
     }
-
+    
     // 3. Отрисовка задач
     function renderTasks(snapshot) {
       const taskList = document.getElementById("taskList");
@@ -124,15 +125,10 @@
 
         const taskDiv = document.createElement("div");
         taskDiv.className = "task" + (task.completed ? " completed" : "");
-
         taskDiv.innerHTML = `
-          <div>
-            <span>${task.text}</span>
-            ${task.description ? <div style="font-size: 12px; color: #aaa;">${task.description}</div> : ""}
-          </div>
+          <span>${task.text}</span>
           <div class="actions">
             <button class="complete-btn" onclick="toggleComplete('${key}', ${!task.completed})">✔️</button>
-            <button onclick="editDescription('${key}', '${task.description ? task.description.replace(/'/g, "\\'") : ''}')">✏️</button>
             <button onclick="deleteTask('${key}')">❌</button>
           </div>
         `;
@@ -140,7 +136,7 @@
       });
     }
 
-    // 4. Управление задачами
+    // 4. Завершение/удаление задачи
     function toggleComplete(key, completed) {
       db.child(key).update({ completed });
     }
@@ -148,14 +144,7 @@
     function deleteTask(key) {
       db.child(key).remove();
     }
-
-    function editDescription(key, currentDescription) {
-      const newDesc = prompt("Введите описание задачи:", currentDescription);
-      if (newDesc !== null) {
-        db.child(key).update({ description: newDesc.trim() });
-      }
-    }
-
+    
     // 5. Слушатель изменений
     db.on("value", renderTasks);
   </script>
