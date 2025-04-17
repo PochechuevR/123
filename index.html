@@ -113,7 +113,8 @@
     newTaskRef.set({ text: taskText, completed: false, description: "" });
     document.getElementById("taskInput").value = "";
   }
-
+    
+  // 3. Отрисовка задач
   function renderTasks(snapshot) {
     const taskList = document.getElementById("taskList");
     taskList.innerHTML = "";
@@ -140,6 +141,7 @@
     });
   }
 
+  // 4. Завершение/удаление задачи
   function toggleComplete(key, completed) {
     db.child(key).update({ completed });
   }
@@ -154,43 +156,9 @@
       db.child(key).update({ description: newDesc.trim() });
     }
   }
-
-  db.on("value", renderTasks);
-    }
     
-    // 3. Отрисовка задач
-    function renderTasks(snapshot) {
-      const taskList = document.getElementById("taskList");
-      taskList.innerHTML = "";
-
-      snapshot.forEach(child => {
-        const task = child.val();
-        const key = child.key;
-
-        const taskDiv = document.createElement("div");
-        taskDiv.className = "task" + (task.completed ? " completed" : "");
-        taskDiv.innerHTML = `
-          <span>${task.text}</span>
-          <div class="actions">
-            <button class="complete-btn" onclick="toggleComplete('${key}', ${!task.completed})">✔️</button>
-            <button onclick="deleteTask('${key}')">❌</button>
-          </div>
-        `;
-        taskList.appendChild(taskDiv);
-      });
-    }
-
-    // 4. Завершение/удаление задачи
-    function toggleComplete(key, completed) {
-      db.child(key).update({ completed });
-    }
-
-    function deleteTask(key) {
-      db.child(key).remove();
-    }
-
-    // 5. Слушатель изменений
-    db.on("value", renderTasks);
+  // 5. Слушатель изменений
+  db.on("value", renderTasks);
   </script>
 </body>
 </html>
