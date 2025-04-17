@@ -8,7 +8,75 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
   <style>
-    /* стили без изменений */
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 400px;
+    }
+    h1 {
+      font-size: 22px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #2a2a2a;
+      color: #fff;
+      font-size: 16px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #00A8FF;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+    .btn:hover {
+      background: #0088CC;
+    }
+    .task {
+      background: #2A2A2A;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .task.completed {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    .actions button {
+      background: none;
+      border: none;
+      color: #FF5252;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+    .complete-btn {
+      color: #00FF90;
+    }
   </style>
 </head>
 <body>
