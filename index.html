@@ -41,6 +41,14 @@
       font-size: 16px;
       box-sizing: border-box;
     }
+     .description {
+      font-size: 12px;
+      color: #aaa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
     .btn {
       width: 100%;
       padding: 12px;
@@ -126,9 +134,9 @@
         taskDiv.className = "task" + (task.completed ? " completed" : "");
 
         taskDiv.innerHTML = `
-          <div>
+          <div style="flex-grow: 1;">
             <span>${task.text}</span>
-            ${task.description ? `<div style="font-size: 12px; color: #aaa;">${task.description}</div>` : ""}
+            ${task.description ? `<div class="description">${task.description}</div>` : ""}
           </div>
           <div class="actions">
             <button onclick="toggleComplete('${key}', ${!task.completed})">✔️</button>
@@ -158,4 +166,3 @@
   </script>
 </body>
 </html>
-
