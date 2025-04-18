@@ -49,6 +49,14 @@
      text-overflow: ellipsis;
      max-width: 100%;
     }
+    .task-title {
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      margin-bottom: 4px;
+    }
     .btn {
       width: 100%;
       padding: 12px;
@@ -79,16 +87,7 @@
     .task-content {
       flex-grow: 1;
       overflow: hidden;
-    }
-    .task-content {
-      flex-grow: 1;
-      overflow: hidden;
       margin-right: 10px;
-    }
-    .task-content span {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 4px;
     }
     .actions {
       display: flex;
@@ -186,8 +185,8 @@
 
         taskDiv.innerHTML = `
           <div class="task-content">
-            <span>${task.text}</span>
-            ${task.description ? `<div class="description">${task.description}</div>` : ""}
+            <div class="task-title" title="${task.text}">${task.text}</div>
+            ${task.description ? `<div class="description" title="${task.description}">${task.description}</div>` : ""}
           </div>
           <div class="actions">
             <button class="complete-btn" onclick="toggleComplete('${task.key}', ${!task.completed})">✔️</button>
