@@ -47,6 +47,7 @@
      white-space: nowrap;
      overflow: hidden;
      text-overflow: ellipsis;
+     max-width: 100%;
     }
     .btn {
       width: 100%;
@@ -79,17 +80,33 @@
       flex-grow: 1;
       overflow: hidden;
     }
+    .task-content {
+      flex-grow: 1;
+      overflow: hidden;
+      margin-right: 10px; /* чтобы не прилипало к кнопкам */
+    }
     .task-content span {
       display: block;
       font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     .actions button {
       background: none;
       border: none;
-      color: #FF5252;
       cursor: pointer;
-      font-size: 14px;
-      margin-left: 10px;
+      font-size: 16px;
+      padding: 4px;
+    }
+    .actions button:nth-child(2) {
+      color: #FFD700;
+    }
+    .actions button:nth-child(3) {
+      color: #FF5252;
     }
     .complete-btn {
       color: #00FF90;
@@ -146,7 +163,7 @@
             ${task.description ? `<div class="description">${task.description}</div>` : ""}
           </div>
           <div class="actions">
-            <button onclick="toggleComplete('${key}', ${!task.completed})">✔️</button>
+            <button class="complete-btn" onclick="toggleComplete('${key}', ${!task.completed})">✔️</button>
             <button onclick="editDescription('${key}', '${task.description ? task.description.replace(/'/g, "\\'") : ''}')">✏️</button>
             <button onclick="deleteTask('${key}')">❌</button>
           </div>
