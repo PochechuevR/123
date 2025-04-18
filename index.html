@@ -41,13 +41,12 @@
       font-size: 16px;
       box-sizing: border-box;
     }
-     .description {
-      font-size: 12px;
-      color: #aaa;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
+    .description {
+     font-size: 12px;
+     color: #aaa;
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
     }
     .btn {
       width: 100%;
@@ -75,6 +74,14 @@
     .task.completed {
       text-decoration: line-through;
       opacity: 0.6;
+    }
+    .task-content {
+      flex-grow: 1;
+      overflow: hidden;
+    }
+    .task-content span {
+      display: block;
+      font-weight: bold;
     }
     .actions button {
       background: none;
@@ -134,7 +141,7 @@
         taskDiv.className = "task" + (task.completed ? " completed" : "");
 
         taskDiv.innerHTML = `
-          <div style="flex-grow: 1;">
+          <div class="task-content">
             <span>${task.text}</span>
             ${task.description ? `<div class="description">${task.description}</div>` : ""}
           </div>
