@@ -115,7 +115,7 @@
 <body>
   <div class="container">
     <h1>Список дел</h1>
-    <input type="text" id="taskInput" placeholder="Новая задача..." />
+    <input type="text" id="taskInput" placeholder="Новая задача..." maxlength="22" />
     <button class="btn" onclick="addTask()">Добавить</button>
     <div id="taskList"></div>
   </div>
@@ -185,7 +185,7 @@
 
         taskDiv.innerHTML = `
           <div class="task-content">
-            <div class="task-title" title="${task.text}">${task.text}</div>
+            <div class="task-title" title="${task.text}">${task.text.length > 22 ? task.text.substring(0, 22) + '...' : task.text}</div>
             ${task.description ? `<div class="description" title="${task.description}">${task.description}</div>` : ""}
           </div>
           <div class="actions">
