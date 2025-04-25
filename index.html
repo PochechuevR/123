@@ -119,13 +119,14 @@
     <button class="btn" onclick="addTask()">Добавить</button>
     <div id="taskList"></div>
   </div>
-<script>
+
+  <script>
     // Инициализация Telegram WebApp
     const tg = window.Telegram.WebApp;
     tg.expand(); // Раскрываем приложение на весь экран
     
     // Получаем уникальный идентификатор пользователя Telegram
-    const userId = tg.initDataUnsafe.user?.id  'anonymous';
+    const userId = tg.initDataUnsafe.user?.id || 'anonymous';
     console.log('User ID:', userId);
 
     // Firebase config
@@ -173,7 +174,7 @@
       // Сортируем задачи: сначала невыполненные, затем выполненные
       tasks.sort((a, b) => {
         if (a.completed === b.completed) {
-          return (b.createdAt  0) - (a.createdAt || 0); // новые выше
+          return (b.createdAt || 0) - (a.createdAt || 0); // новые выше
         }
         return a.completed ? 1 : -1;
       });
@@ -185,7 +186,7 @@
         taskDiv.innerHTML = `
           <div class="task-content">
             <div class="task-title" title="${task.text}">${task.text.length > 22 ? task.text.substring(0, 22) + '...' : task.text}</div>
-            ${task.description ? <div class="description" title="${task.description}">${task.description}</div> : ""}
+            ${task.description ? `<div class="description" title="${task.description}">${task.description}</div>` : ""}
           </div>
           <div class="actions">
             <button class="complete-btn" onclick="toggleComplete('${task.key}', ${!task.completed})">✔️</button>
