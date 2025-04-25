@@ -42,12 +42,12 @@
       box-sizing: border-box;
     }
     .description {
-      font-size: 12px;
-      color: #aaa;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
+     font-size: 12px;
+     color: #aaa;
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
+     max-width: 100%;
     }
     .task-title {
       font-weight: bold;
@@ -119,113 +119,110 @@
     <button class="btn" onclick="addTask()">Добавить</button>
     <div id="taskList"></div>
   </div>
-
 <script>
-  // Инициализация Telegram WebApp
-  const tg = window.Telegram.WebApp;
-  tg.expand(); // Раскрываем приложение на весь экран
+    // Инициализация Telegram WebApp
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Раскрываем приложение на весь экран
+    
+    // Получаем уникальный идентификатор пользователя Telegram
+    const userId = tg.initDataUnsafe.user?.id  'anonymous';
+    console.log('User ID:', userId);
 
-  // Получаем уникальный идентификатор пользователя Telegram
-  const userId = tg.initDataUnsafe.user?.id || 'anonymous';
-  console.log('User ID:', userId);
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyANHM115TxFfva5d-oMDKAtPmBF_59OgTA",
+      authDomain: "financeai-e9f18.firebaseapp.com",
+      databaseURL: "https://todoapp-e0f58-default-rtdb.europe-west1.firebasedatabase.app/",
+      projectId: "financeai-e9f18",
+      storageBucket: "financeai-e9f18.appspot.com",
+      messagingSenderId: "71690881541",
+      appId: "1:71690881541:web:c68e6ecf51082dfbedaa6c",
+      measurementId: "G-S9T1BR9SEL"
+    };
 
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyANHM115TxFfva5d-oMDKAtPmBF_59OgTA",
-    authDomain: "financeai-e9f18.firebaseapp.com",
-    databaseURL: "https://todoapp-e0f58-default-rtdb.europe-west1.firebasedatabase.app/",
-    projectId: "financeai-e9f18",
-    storageBucket: "financeai-e9f18.appspot.com",
-    messagingSenderId: "71690881541",
-    appId: "1:71690881541:web:c68e6ecf51082dfbedaa6c",
-    measurementId: "G-S9T1BR9SEL"
-  };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref("users/" + userId + "/tasks");
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database().ref("users/" + userId + "/tasks");
+    function addTask() {
+      const taskText = document.getElementById("taskInput").value.trim();
+      if (taskText === "") return;
 
-  function addTask() {
-    const taskText = document.getElementById("taskInput").value.trim();
-    if (taskText === "") return;
-
-    const newTaskRef = db.push();
-    newTaskRef.set({ 
-      text: taskText, 
-      completed: false, 
-      description: "",
-      createdAt: firebase.database.ServerValue.TIMESTAMP
-    });
-    document.getElementById("taskInput").value = "";
-  }
-
-  function renderTasks(snapshot) {
-    const taskList = document.getElementById("taskList");
-    taskList.innerHTML = "";
-
-    // Преобразуем snapshot в массив и сортируем по дате создания
-    const tasks = [];
-    snapshot.forEach(child => {
-      tasks.push({
-        key: child.key,
-        ...child.val()
+      const newTaskRef = db.push();
+      newTaskRef.set({ 
+        text: taskText, 
+        completed: false, 
+        description: "",
+        createdAt: firebase.database.ServerValue.TIMESTAMP
       });
-    });
+      document.getElementById("taskInput").value = "";
+    }
 
-    // Сортируем задачи: сначала невыполненные, затем выполненные
-    tasks.sort((a, b) => {
-      if (a.completed === b.completed) {
-        return (b.createdAt  0) - (a.createdAt  0); // новые выше
-      }
-      return a.completed ? 1 : -1;
-    });
+    function renderTasks(snapshot) {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "";
 
-    tasks.forEach(task => {
-      const taskDiv = document.createElement("div");
-      taskDiv.className = "task" + (task.completed ? " completed" : "");
+      // Преобразуем snapshot в массив и сортируем по дате создания
+      const tasks = [];
+      snapshot.forEach(child => {
+        tasks.push({
+          key: child.key,
+          ...child.val()
+        });
+      });
 
-      taskDiv.innerHTML = `
-        <div class="task-content">
-          <div class="task-title" title="${task.text}">
-            ${task.text.length > 22 ? task.text.substring(0, 22) + '...' : task.text}
+      // Сортируем задачи: сначала невыполненные, затем выполненные
+      tasks.sort((a, b) => {
+        if (a.completed === b.completed) {
+          return (b.createdAt  0) - (a.createdAt || 0); // новые выше
+        }
+        return a.completed ? 1 : -1;
+      });
+
+      tasks.forEach(task => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "task" + (task.completed ? " completed" : "");
+
+        taskDiv.innerHTML = `
+          <div class="task-content">
+            <div class="task-title" title="${task.text}">${task.text.length > 22 ? task.text.substring(0, 22) + '...' : task.text}</div>
+            ${task.description ? <div class="description" title="${task.description}">${task.description}</div> : ""}
           </div>
-          ${task.description ? <div class="description" title="${task.description}">${task.description}</div> : ""}
-        </div>
-        <div class="actions">
-          <button class="complete-btn" onclick="toggleComplete('${task.key}', ${!task.completed})">✔️</button>
-          <button onclick="editDescription('${task.key}', '${task.description ? task.description.replace(/'/g, "\\'") : ''}')">✏️</button>
-          <button onclick="deleteTask('${task.key}')">❌</button>
-        </div>
-      `;
-      taskList.appendChild(taskDiv);
+          <div class="actions">
+            <button class="complete-btn" onclick="toggleComplete('${task.key}', ${!task.completed})">✔️</button>
+            <button onclick="editDescription('${task.key}', '${task.description ? task.description.replace(/'/g, "\\'") : ''}')">✏️</button>
+            <button onclick="deleteTask('${task.key}')">❌</button>
+          </div>
+        `;
+        taskList.appendChild(taskDiv);
+      });
+    }
+
+    function toggleComplete(key, completed) {
+      db.child(key).update({ completed });
+    }
+
+    function deleteTask(key) {
+      if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
+        db.child(key).remove();
+      }
+    }
+
+    function editDescription(key, currentDescription) {
+      const newDesc = prompt("Введите описание задачи:", currentDescription);
+      if (newDesc !== null) {
+        db.child(key).update({ description: newDesc.trim() });
+      }
+    }
+
+    // Обработчик для загрузки задач
+    db.on("value", renderTasks, (error) => {
+      console.error("Ошибка загрузки задач:", error);
     });
-  }
 
-  function toggleComplete(key, completed) {
-    db.child(key).update({ completed });
-  }
-
-  function deleteTask(key) {
-    if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
-      db.child(key).remove();
-    }
-  }
-
-  function editDescription(key, currentDescription) {
-    const newDesc = prompt("Введите описание задачи:", currentDescription);
-    if (newDesc !== null) {
-      db.child(key).update({ description: newDesc.trim() });
-    }
-  }
-
-  // Обработчик для загрузки задач
-  db.on("value", renderTasks, (error) => {
-    console.error("Ошибка загрузки задач:", error);
-  });
-
-  // Обработчик нажатия кнопки назад в Telegram
-  tg.BackButton.onClick(() => {
-    tg.close();
-  });
-</script>
+    // Обработчик нажатия кнопки назад в Telegram
+    tg.BackButton.onClick(() => {
+      tg.close();
+    });
+  </script>
 </body>
 </html>
