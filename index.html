@@ -31,14 +31,23 @@
     }
     input {
       width: 100%;
+      display: block;
       padding: 12px;
-      margin-bottom: 10px;
+      margin: 0 0 10px 0;
       border: none;
       border-radius: 10px;
       background: #2a2a2a;
       color: #fff;
       font-size: 16px;
       box-sizing: border-box;
+    }
+    .task-title {
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      margin-bottom: 4px;
     }
     .btn {
       width: 100%;
@@ -62,39 +71,18 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
     }
     .task.completed, .subtask.completed {
       text-decoration: line-through;
       opacity: 0.6;
     }
-    .task-content, .subtask-content {
-      flex-grow: 1;
-      overflow: hidden;
-      margin-right: 10px;
-    }
-    .task-title, .subtask-title {
-      font-weight: bold;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-      margin-bottom: 4px;
-    }
-    .description {
-      font-size: 12px;
-      color: #aaa;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-    .time-info {
-      font-size: 10px;
-      color: #888;
-      margin-top: 3px;
+    .subtask {
+      margin-left: 20px;
     }
     .actions {
       display: flex;
+      align-items: center;
       gap: 8px;
     }
     .actions button {
@@ -104,23 +92,41 @@
       font-size: 16px;
       padding: 4px;
     }
-    .complete-btn { color: #00FF90; }
-    .overdue { color: #ff6b6b !important; }
+    .actions button:nth-child(1) {
+      color: #aaa;
+    }
+    .actions button:nth-child(3) {
+      color: #FFD700;
+    }
+    .actions button:nth-child(4) {
+      color: #FF5252;
+    }
+    .complete-btn {
+      color: #00FF90;
+    }
+    .overdue {
+      color: #ff6b6b !important;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Список дел</h1>
-    <input type="text" id="taskInput" placeholder="Новая задача..." maxlength="50" />
+    <input type="text" id="taskInput" placeholder="Новая задача..." maxlength="22" />
     <button class="btn" onclick="addTask()">Добавить</button>
     <div id="taskList"></div>
   </div>
 
   <script>
+    // Инициализация Telegram WebApp
     const tg = window.Telegram.WebApp;
-    tg.expand();
-    const userId = tg.initDataUnsafe.user?.id || 'anonymous';
+    tg.expand(); // Раскрываем приложение на весь экран
 
+    // Получаем уникальный идентификатор пользователя Telegram
+    const userId = tg.initDataUnsafe.user?.id || 'anonymous';
+    console.log('User ID:', userId);
+
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyANHM115TxFfva5d-oMDKAtPmBF_59OgTA",
       authDomain: "financeai-e9f18.firebaseapp.com",
@@ -128,7 +134,8 @@
       projectId: "financeai-e9f18",
       storageBucket: "financeai-e9f18.appspot.com",
       messagingSenderId: "71690881541",
-      appId: "1:71690881541:web:c68e6ecf51082dfbedaa6c"
+      appId: "1:71690881541:web:c68e6ecf51082dfbedaa6c",
+      measurementId: "G-S9T1BR9SEL"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -136,15 +143,16 @@
 
     function addTask() {
       const taskText = document.getElementById("taskInput").value.trim();
-      if (!taskText) return;
+      if (taskText === "") return;
 
-      db.push({
+      const newTaskRef = db.push();
+      newTaskRef.set({
         text: taskText,
         completed: false,
         description: "",
         createdAt: firebase.database.ServerValue.TIMESTAMP,
         deadline: null,
-        subtasks: {}
+        subtasks: [] // Добавляем массив для подзадач
       });
       document.getElementById("taskInput").value = "";
     }
@@ -153,20 +161,30 @@
       if (!timestamp) return "Не указано";
       const date = new Date(timestamp);
       return date.toLocaleString('ru-RU', {
-        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     }
 
     function isOverdue(deadline) {
-      return deadline && new Date(deadline) < new Date();
+      if (!deadline) return false;
+      return new Date(deadline) < new Date();
     }
 
     function renderTasks(snapshot) {
       const taskList = document.getElementById("taskList");
       taskList.innerHTML = "";
+
       const tasks = [];
-      snapshot.forEach(child => tasks.push({ key: child.key, ...child.val() }));
-      tasks.sort((a, b) => a.completed - b.completed || (b.createdAt || 0) - (a.createdAt || 0));
+      snapshot.forEach(child => {
+        tasks.push({
+          key: child.key,
+          ...child.val()
+        });
+      });
 
       tasks.forEach(task => {
         const taskDiv = document.createElement("div");
@@ -175,9 +193,8 @@
 
         taskDiv.innerHTML = `
           <div class="task-content">
-            <div class="task-title" title="${task.text}">${task.text.length > 22 ? task.text.slice(0, 22) + '...' : task.text}</div>
-            ${task.description ? `<div class="description" title="${task.description}">${task.description}</div>` : ""}
-            <div class="time-info" id="time-info-${task.key}" style="display:none;">
+            <div class="task-title" title="${task.text}">${task.text.length > 22 ? task.text.substring(0, 22) + '...' : task.text}</div>
+            <div class="time-info" id="time-info-${task.key}" style="display: none;">
               Создано: ${formatDate(task.createdAt)}<br>
               ${task.deadline ? `Дедлайн: <span class="${deadlineClass}">${formatDate(task.deadline)}</span>` : "Дедлайн не установлен"}
             </div>
@@ -185,88 +202,122 @@
           <div class="actions">
             <button class="complete-btn" onclick="toggleComplete('${task.key}', ${!task.completed})">✔️</button>
             <button onclick="showTimeInfo('${task.key}')">⏰</button>
-            <button onclick="editTask('${task.key}', '${task.text.replace(/'/g, "\\'")}', '${task.description?.replace(/'/g, "\\'") || ''}', ${task.deadline || 'null'})">✏️</button>
+            <button onclick="editTask('${task.key}', '${task.text.replace(/'/g, "\\'")}', '${task.description ? task.description.replace(/'/g, "\\'") : ''}', ${task.deadline || 'null'})">✏️</button>
             <button onclick="deleteTask('${task.key}')">❌</button>
-            <button onclick="addSubtask('${task.key}')">➕</button>
-          </div>`;
+            <button onclick="addSubtask('${task.key}')">➕ Подзадача</button>
+          </div>
+        `;
 
         taskList.appendChild(taskDiv);
 
+        // Рендерим подзадачи
         if (task.subtasks) {
-          Object.entries(task.subtasks).forEach(([subKey, sub]) => {
-            const subDiv = document.createElement("div");
-            subDiv.className = "subtask" + (sub.completed ? " completed" : "");
-            const shortText = sub.text.length > 30 ? sub.text.slice(0, 30) + '...' : sub.text;
-
-            subDiv.innerHTML = `
-              <div class="subtask-content">
-                <div class="subtask-title" title="${sub.text}">${shortText}</div>
-              </div>
+          task.subtasks.forEach((subtask, index) => {
+            const subtaskDiv = document.createElement("div");
+            subtaskDiv.className = "subtask" + (subtask.completed ? " completed" : "");
+            subtaskDiv.innerHTML = `
+              <div class="task-title" title="${subtask.text}">${subtask.text.length > 30 ? subtask.text.substring(0, 30) + '...' : subtask.text}</div>
               <div class="actions">
-                <button class="complete-btn" onclick="toggleSubtaskComplete('${task.key}', '${subKey}', ${!sub.completed})">✔️</button>
-                <button onclick="editSubtask('${task.key}', '${subKey}', '${sub.text.replace(/'/g, "\\'")}')">✏️</button>
-                <button onclick="deleteSubtask('${task.key}', '${subKey}')">❌</button>
+                <button class="complete-btn" onclick="toggleSubtaskComplete('${task.key}', ${index}, ${!subtask.completed})">✔️</button>
+                <button onclick="editSubtask('${task.key}', ${index}, '${subtask.text.replace(/'/g, "\\'")}', '${subtask.description ? subtask.description.replace(/'/g, "\\'") : ''}')">✏️</button>
+                <button onclick="deleteSubtask('${task.key}', ${index})">❌</button>
               </div>
             `;
-            taskList.appendChild(subDiv);
+            taskDiv.appendChild(subtaskDiv);
           });
         }
       });
+    }
+
+    function addSubtask(taskKey) {
+      const subtaskText = prompt("Введите текст подзадачи:");
+      if (subtaskText) {
+        const taskRef = db.child(taskKey);
+        taskRef.child("subtasks").push({
+          text: subtaskText,
+          completed: false,
+          description: ""
+        });
+      }
     }
 
     function toggleComplete(key, completed) {
       db.child(key).update({ completed });
     }
 
+    function toggleSubtaskComplete(taskKey, index, completed) {
+      db.child(taskKey).child("subtasks").child(index).update({ completed });
+    }
+
     function deleteTask(key) {
-      if (confirm("Удалить задачу?")) db.child(key).remove();
+      if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
+        db.child(key).remove();
+      }
+    }
+
+    function deleteSubtask(taskKey, index) {
+      if (confirm("Вы уверены, что хотите удалить эту подзадачу?")) {
+        db.child(taskKey).child("subtasks").child(index).remove();
+      }
     }
 
     function showTimeInfo(key) {
-      const info = document.getElementById(`time-info-${key}`);
-      info.style.display = info.style.display === 'none' ? 'block' : 'none';
+      const timeInfo = document.getElementById(`time-info-${key}`);
+      timeInfo.style.display = timeInfo.style.display === 'none' ? 'block' : 'none';
     }
 
-    function editTask(key, currentText, currentDesc, currentDeadline) {
-      const newText = prompt("Название:", currentText);
+    function editTask(key, currentText, currentDescription, currentDeadline) {
+      const newText = prompt("Название задачи:", currentText);
       if (newText === null) return;
-      const newDesc = prompt("Описание:", currentDesc);
+
+      const newDesc = prompt("Описание задачи:", currentDescription);
       if (newDesc === null) return;
+
       let newDeadline = currentDeadline;
-      const input = prompt("Дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ):", currentDeadline ? formatDate(currentDeadline) : "");
-      if (input !== null) {
-        if (!input.trim()) newDeadline = null;
-        else {
-          const [d, m, y, h = '23', min = '59'] = input.match(/\d+/g) || [];
-          const date = new Date(y, m - 1, d, h, min);
-          if (!isNaN(date)) newDeadline = date.getTime();
-          else return alert("Неверный формат даты!");
+      const deadlineInput = prompt("Дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ или оставьте пустым):", currentDeadline ? formatDate(currentDeadline) : "");
+      
+      if (deadlineInput !== null) {
+        if (deadlineInput.trim() === "") {
+          newDeadline = null;
+        } else {
+          const [datePart, timePart] = deadlineInput.split(' ');
+          const [day, month, year] = datePart.split('.');
+          const [hours, minutes] = timePart ? timePart.split(':') : ['23', '59'];
+          
+          const parsedDate = new Date(year, month - 1, day, hours, minutes);
+          if (!isNaN(parsedDate.getTime())) {
+            newDeadline = parsedDate.getTime();
+          } else {
+            alert("Некорректный формат даты! Используйте ДД.ММ.ГГГГ ЧЧ:ММ");
+            return;
+          }
         }
       }
-      db.child(key).update({ text: newText.trim(), description: newDesc.trim(), deadline: newDeadline });
+      
+      db.child(key).update({ 
+        text: newText.trim(),
+        description: newDesc.trim(),
+        deadline: newDeadline
+      });
     }
 
-    function addSubtask(taskKey) {
-      const subText = prompt("Текст подзадачи:");
-      if (!subText) return;
-      db.child(taskKey).child("subtasks").push({ text: subText.trim(), completed: false });
+    function editSubtask(taskKey, index, currentText, currentDescription) {
+      const newText = prompt("Название подзадачи:", currentText);
+      if (newText === null) return;
+
+      const newDesc = prompt("Описание подзадачи:", currentDescription);
+      if (newDesc === null) return;
+
+      db.child(taskKey).child("subtasks").child(index).update({
+        text: newText.trim(),
+        description: newDesc.trim()
+      });
     }
 
-    function toggleSubtaskComplete(taskKey, subKey, completed) {
-      db.child(taskKey).child("subtasks").child(subKey).update({ completed });
-    }
+    // Обработчик для загрузки задач
+    db.on("value", renderTasks, (error) => {
+      console.error("Ошибка загрузки задач:", error);
+    });
 
-    function editSubtask(taskKey, subKey, currentText) {
-      const newText = prompt("Редактировать подзадачу:", currentText);
-      if (newText) db.child(taskKey).child("subtasks").child(subKey).update({ text: newText.trim() });
-    }
-
-    function deleteSubtask(taskKey, subKey) {
-      if (confirm("Удалить подзадачу?")) db.child(taskKey).child("subtasks").child(subKey).remove();
-    }
-
-    db.on("value", renderTasks);
-    tg.BackButton.onClick(() => tg.close());
-  </script>
-</body>
-</html>
+    // Обработчик нажатия кнопки назад в Telegram
+    tg.BackButton.onClick(()
