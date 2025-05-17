@@ -1,338 +1,148 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ToDo Web3</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-  <style>
-    body {
-      background-color: #121212;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 400px;
-    }
-    h1 {
-      font-size: 22px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    input {
-      width: 100%;
-      display: block;
-      padding: 12px;
-      margin: 0 0 10px 0;
-      border: none;
-      border-radius: 10px;
-      background: #2a2a2a;
-      color: #fff;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    .description {
-      font-size: 12px;
-      color: #aaa;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-    .time-info {
-      font-size: 10px;
-      color: #888;
-      margin-top: 3px;
-    }
-    .task-title {
-      font-weight: bold;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-      margin-bottom: 4px;
-    }
-    .btn {
-      width: 100%;
-      padding: 12px;
-      background: #00A8FF;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-bottom: 15px;
-    }
-    .btn:hover {
-      background: #0088CC;
-    }
-    .task {
-      background: #2A2A2A;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .task.completed {
-      text-decoration: line-through;
-      opacity: 0.6;
-    }
-    .task-content {
-      flex-grow: 1;
-      overflow: hidden;
-      margin-right: 10px;
-    }
-    .actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .actions button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 4px;
-    }
-    .actions button:nth-child(1) { color: #aaa; }
-    .actions button:nth-child(3) { color: #FFD700; }
-    .actions button:nth-child(4) { color: #FF5252; }
-    .complete-btn { color: #00FF90; }
-    .overdue { color: #ff6b6b !important; }
-    .subtask-list {
-      margin-top: 8px;
-      margin-left: 10px;
-      border-left: 2px solid #444;
-      padding-left: 10px;
-    }
-    .subtask {
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 4px 0;
-    }
-    .subtask input[type="checkbox"] {
-      margin-right: 6px;
-    }
-    .subtask-buttons button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #aaa;
-      font-size: 13px;
-      margin-left: 6px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Список дел</h1>
-    <input type="text" id="taskInput" placeholder="Новая задача..." maxlength="22" />
-    <button class="btn" onclick="addTask()">Добавить</button>
-    <div id="taskList"></div>
-  </div>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ToDo App</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-2xl font-bold mb-4">ToDo App</h1>
+      <input id="taskInput" type="text" placeholder="Enter your task" class="border rounded p-2 w-full mb-4" />
+      <button onclick="addTask()" class="bg-blue-500 text-white px-4 py-2 rounded">Add Task</button>
+      <ul id="tasksList" class="mt-4 space-y-2"></ul>
+    </div>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    const userId = tg.initDataUnsafe.user?.id || 'anonymous';
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCEaHe1v0mB65FL0EVplTMD7BBiPy0DQpA",
+        authDomain: "todoapptelegram-48b63.firebaseapp.com",
+        projectId: "todoapptelegram-48b63",
+        storageBucket: "todoapptelegram-48b63.appspot.com",
+        messagingSenderId: "1091616428752",
+        appId: "1:1091616428752:web:a8578d65a3d47cb1f504e1",
+        databaseURL: "https://todoapptelegram-48b63-default-rtdb.europe-west1.firebasedatabase.app/",
+      };
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyANHM115TxFfva5d-oMDKAtPmBF_59OgTA",
-      authDomain: "financeai-e9f18.firebaseapp.com",
-      databaseURL: "https://todoapp-e0f58-default-rtdb.europe-west1.firebasedatabase.app/",
-      projectId: "financeai-e9f18",
-      storageBucket: "financeai-e9f18.appspot.com",
-      messagingSenderId: "71690881541",
-      appId: "1:71690881541:web:c68e6ecf51082dfbedaa6c",
-      measurementId: "G-S9T1BR9SEL"
-    };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database().ref("users/" + userId + "/tasks");
-
-    function addTask() {
-      const taskText = document.getElementById("taskInput").value.trim();
-      if (taskText === "") return;
-      const newTaskRef = db.push();
-      newTaskRef.set({
-        text: taskText,
-        completed: false,
-        description: "",
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        deadline: null
-      });
-      document.getElementById("taskInput").value = "";
-    }
-
-    function formatDate(timestamp) {
-      if (!timestamp) return "Не указано";
-      const date = new Date(timestamp);
-      return date.toLocaleString('ru-RU', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      });
-    }
-
-    function isOverdue(deadline) {
-      if (!deadline) return false;
-      return new Date(deadline) < new Date();
-    }
-
-    function renderTasks(snapshot) {
-      const taskList = document.getElementById("taskList");
-      taskList.innerHTML = "";
-      const tasksObj = snapshot.val() || {};
-      const tasks = Object.entries(tasksObj).map(([key, val]) => ({ key, ...val }));
-
-      tasks.sort((a, b) => {
-        if (a.completed === b.completed) {
-          if (!a.completed && !b.completed) {
-            if (a.deadline && b.deadline) return new Date(a.deadline) - new Date(b.deadline);
-            if (a.deadline) return -1;
-            if (b.deadline) return 1;
-          }
-          return (b.createdAt || 0) - (a.createdAt || 0);
-        }
-        return a.completed ? 1 : -1;
-      });
-
-      tasks.forEach(task => {
-        const taskDiv = document.createElement("div");
-        taskDiv.className = "task" + (task.completed ? " completed" : "");
-        const deadlineClass = !task.completed && isOverdue(task.deadline) ? "overdue" : "";
-        taskDiv.innerHTML = `
-          <div class="task-content">
-            <div class="task-title" title="${task.text}">${task.text.length > 22 ? task.text.substring(0, 22) + '...' : task.text}</div>
-            ${task.description ? `<div class="description" title="${task.description}">${task.description}</div>` : ""}
-            <div class="time-info" id="time-info-${task.key}" style="display: none;">
-              Создано: ${formatDate(task.createdAt)}<br>
-              ${task.deadline ? `Дедлайн: <span class="${deadlineClass}">${formatDate(task.deadline)}</span>` : "Дедлайн не установлен"}
-            </div>
-          </div>
-          <div class="actions">
-            <button class="complete-btn" onclick="toggleComplete('${task.key}', ${!task.completed})">✔️</button>
-            <button onclick="showTimeInfo('${task.key}')">⏰</button>
-            <button onclick="editTask('${task.key}', '${task.text.replace(/'/g, "\\'")}', '${task.description ? task.description.replace(/'/g, "\\'") : ''}', ${task.deadline || 'null'})">✏️</button>
-            <button onclick="deleteTask('${task.key}')">❌</button>
-            <button onclick="addSubtask('${task.key}')">➕</button>
-          </div>
-        `;
-
-        if (task.subtasks) {
-          const subtaskContainer = document.createElement("div");
-          subtaskContainer.className = "subtask-list";
-          Object.entries(task.subtasks).forEach(([subKey, subtask]) => {
-            const subtaskDiv = document.createElement("div");
-            subtaskDiv.className = "subtask";
-            subtaskDiv.innerHTML = `
-              <label style="flex-grow:1;">
-                <input type="checkbox" ${subtask.completed ? "checked" : ""} 
-                  onchange="toggleSubtaskComplete('${task.key}', '${subKey}', ${!subtask.completed})">
-                ${subtask.text}
-              </label>
-              <div class="subtask-buttons">
-                <button onclick="editSubtask('${task.key}', '${subKey}', '${subtask.text.replace(/'/g, "\\'")}')">✏️</button>
-                <button onclick="deleteSubtask('${task.key}', '${subKey}')">❌</button>
-              </div>
-            `;
-            subtaskContainer.appendChild(subtaskDiv);
+      function addTask() {
+        const taskInput = document.getElementById("taskInput");
+        const taskText = taskInput.value;
+        if (taskText.trim() !== "") {
+          const newTaskRef = database.ref("tasks").push();
+          newTaskRef.set({
+            text: taskText,
+            completed: false,
+            subtasks: {},
           });
-          taskDiv.querySelector(".task-content").appendChild(subtaskContainer);
+          taskInput.value = "";
         }
-
-        taskList.appendChild(taskDiv);
-      });
-    }
-
-    function showTimeInfo(key) {
-      const timeInfo = document.getElementById(`time-info-${key}`);
-      timeInfo.style.display = timeInfo.style.display === 'none' ? 'block' : 'none';
-    }
-
-    function toggleComplete(key, completed) {
-      db.child(key).update({ completed });
-    }
-
-    function deleteTask(key) {
-      if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
-        db.child(key).remove();
       }
-    }
 
-    function editTask(key, currentText, currentDescription, currentDeadline) {
-      const newText = prompt("Название задачи:", currentText);
-      if (newText === null) return;
-      const newDesc = prompt("Описание задачи:", currentDescription);
-      if (newDesc === null) return;
-      let newDeadline = currentDeadline;
-      const deadlineInput = prompt("Дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ или пусто):",
-        currentDeadline ? formatDate(currentDeadline) : "");
-      if (deadlineInput !== null) {
-        if (deadlineInput.trim() === "") {
-          newDeadline = null;
-        } else {
-          const [datePart, timePart] = deadlineInput.split(' ');
-          const [day, month, year] = datePart.split('.');
-          const [hours, minutes] = timePart ? timePart.split(':') : ['23', '59'];
-          const parsedDate = new Date(year, month - 1, day, hours, minutes);
-          if (!isNaN(parsedDate.getTime())) {
-            newDeadline = parsedDate.getTime();
-          } else {
-            alert("Неверный формат даты!");
-            return;
+      function toggleTask(key, currentStatus) {
+        database.ref("tasks/" + key).update({ completed: !currentStatus });
+      }
+
+      function deleteTask(key) {
+        database.ref("tasks/" + key).remove();
+      }
+
+      function addSubtask(taskKey, subtaskInput) {
+        const subtaskText = subtaskInput.value;
+        if (subtaskText.trim() !== "") {
+          const newSubtaskRef = database.ref(`tasks/${taskKey}/subtasks`).push();
+          newSubtaskRef.set({
+            text: subtaskText,
+            completed: false,
+          });
+          subtaskInput.value = "";
+        }
+      }
+
+      function toggleSubtask(taskKey, subtaskKey, currentStatus) {
+        database.ref(`tasks/${taskKey}/subtasks/${subtaskKey}`).update({ completed: !currentStatus });
+      }
+
+      function renderTasks(tasks) {
+        const tasksList = document.getElementById("tasksList");
+        tasksList.innerHTML = "";
+        for (const key in tasks) {
+          const task = tasks[key];
+
+          const li = document.createElement("li");
+          li.className = "bg-white p-4 rounded shadow";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = task.completed;
+          checkbox.className = "mr-2";
+          checkbox.onchange = () => toggleTask(key, task.completed);
+
+          const span = document.createElement("span");
+          span.textContent = task.text;
+          span.className = task.completed ? "line-through" : "";
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "Delete";
+          deleteBtn.className = "ml-4 text-red-500";
+          deleteBtn.onclick = () => deleteTask(key);
+
+          li.appendChild(checkbox);
+          li.appendChild(span);
+          li.appendChild(deleteBtn);
+
+          const subtasksContainer = document.createElement("ul");
+          subtasksContainer.className = "ml-6 mt-2 space-y-1";
+
+          if (task.subtasks) {
+            for (const subtaskKey in task.subtasks) {
+              const subtask = task.subtasks[subtaskKey];
+
+              const subLi = document.createElement("li");
+              subLi.className = "flex items-center";
+
+              const subCheckbox = document.createElement("input");
+              subCheckbox.type = "checkbox";
+              subCheckbox.checked = subtask.completed;
+              subCheckbox.className = "mr-2";
+              subCheckbox.onchange = () => toggleSubtask(key, subtaskKey, subtask.completed);
+
+              const subSpan = document.createElement("span");
+              subSpan.textContent = subtask.text;
+              subSpan.className = subtask.completed ? "line-through" : "";
+
+              subLi.appendChild(subCheckbox);
+              subLi.appendChild(subSpan);
+              subtasksContainer.appendChild(subLi);
+            }
           }
+
+          const subtaskInput = document.createElement("input");
+          subtaskInput.placeholder = "Enter subtask";
+          subtaskInput.className = "border rounded p-1 text-sm w-3/4 mt-2";
+
+          const addSubtaskBtn = document.createElement("button");
+          addSubtaskBtn.textContent = "Add Subtask";
+          addSubtaskBtn.className = "ml-2 text-blue-500 text-sm";
+          addSubtaskBtn.onclick = () => addSubtask(key, subtaskInput);
+
+          li.appendChild(subtasksContainer);
+          li.appendChild(subtaskInput);
+          li.appendChild(addSubtaskBtn);
+
+          tasksList.appendChild(li);
         }
       }
-      db.child(key).update({
-        text: newText.trim(),
-        description: newDesc.trim(),
-        deadline: newDeadline
+
+      database.ref("tasks").on("value", (snapshot) => {
+        const tasks = snapshot.val();
+        renderTasks(tasks || {});
       });
-    }
-
-    function addSubtask(taskKey) {
-      const text = prompt("Текст подзадачи:");
-      if (!text) return;
-      const subtaskRef = db.child(`${taskKey}/subtasks`).push();
-      subtaskRef.set({ text: text.trim(), completed: false });
-    }
-
-    function toggleSubtaskComplete(taskKey, subKey, completed) {
-      db.child(`${taskKey}/subtasks/${subKey}`).update({ completed });
-    }
-
-    function editSubtask(taskKey, subKey, currentText) {
-      const newText = prompt("Изменить подзадачу:", currentText);
-      if (newText !== null) {
-        db.child(`${taskKey}/subtasks/${subKey}`).update({ text: newText.trim() });
-      }
-    }
-
-    function deleteSubtask(taskKey, subKey) {
-      if (confirm("Удалить подзадачу?")) {
-        db.child(`${taskKey}/subtasks/${subKey}`).remove();
-      }
-    }
-
-    db.on("value", renderTasks, (error) => {
-      console.error("Ошибка загрузки задач:", error);
-    });
-
-    tg.BackButton.onClick(() => tg.close());
-  </script>
-</body>
+    </script>
+  </body>
 </html>
