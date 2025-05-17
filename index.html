@@ -2,631 +2,367 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>ToDo App with Priorities</title>
+  <title>ToDo Bot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
   <style>
     body {
-      background-color: #121212;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      background-color: var(--tg-theme-bg-color, #121212);
+      color: var(--tg-theme-text-color, #ffffff);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
-      touch-action: manipulation;
+      padding: 0;
+      min-height: 100vh;
     }
     .container {
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-    h1 {
-      font-size: 22px;
-      text-align: center;
-      margin-bottom: 20px;
-      color: #00A8FF;
-    }
-    input {
-      width: 100%;
-      display: block;
-      padding: 12px;
-      margin: 0 0 10px 0;
-      border: none;
-      border-radius: 10px;
-      background: #2a2a2a;
-      color: #fff;
-      font-size: 16px;
+      padding: 16px;
+      max-width: 100%;
       box-sizing: border-box;
     }
-    .description {
-      font-size: 12px;
-      color: #aaa;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
-    .time-info {
-      font-size: 10px;
-      color: #888;
-      margin-top: 3px;
-    }
-    .task-title {
-      font-weight: bold;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-    }
-    .btn {
-      width: 100%;
-      padding: 12px;
-      background: #00A8FF;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-bottom: 15px;
-      transition: background 0.2s;
-    }
-    .btn:hover {
-      background: #0088CC;
-    }
-    .task {
-      background: #2A2A2A;
-      padding: 12px;
-      margin: 8px 0;
-      border-radius: 12px;
+    .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: all 0.2s;
+      margin-bottom: 16px;
     }
-    .task:hover {
-      background: #333;
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
     }
-    .task.completed {
-      text-decoration: line-through;
-      opacity: 0.6;
-      background: #252525;
+    .add-task {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
     }
-    .task-content {
+    #taskInput {
       flex-grow: 1;
-      overflow: hidden;
-      margin-right: 10px;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: var(--tg-theme-secondary-bg-color, #2a2a2a);
+      color: var(--tg-theme-text-color, #ffffff);
+      font-size: 16px;
     }
-    .actions {
+    .add-btn {
+      padding: 0 16px;
+      background: var(--tg-theme-button-color, #2481cc);
+      color: var(--tg-theme-button-text-color, #ffffff);
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .task {
+      background: var(--tg-theme-secondary-bg-color, #2a2a2a);
+      padding: 12px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .actions button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 6px;
-      min-width: 30px;
-      border-radius: 6px;
-      transition: all 0.2s;
+    .task.completed {
+      opacity: 0.6;
     }
-    .actions button:hover {
-      background: rgba(255, 255, 255, 0.1);
+    .task-content {
+      flex-grow: 1;
+      overflow: hidden;
     }
-    .complete-btn { color: #00FF90; }
-    .overdue { color: #ff6b6b !important; }
-    .subtask-list {
-      margin-top: 8px;
-      margin-left: 10px;
-      border-left: 2px solid #444;
-      padding-left: 10px;
-    }
-    .subtask {
-      font-size: 13px;
+    .task-title {
+      font-weight: 500;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin: 6px 0;
+      gap: 6px;
+      margin-bottom: 4px;
     }
-    .subtask input[type="checkbox"] {
-      margin-right: 8px;
-      cursor: pointer;
+    .task-title.completed {
+      text-decoration: line-through;
     }
-    .subtask-buttons button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #aaa;
-      font-size: 13px;
-      margin-left: 6px;
-      padding: 2px;
-    }
-    /* Priority styles */
-    .priority-indicator {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
+    .priority-dot {
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      margin-right: 8px;
       flex-shrink: 0;
     }
-    .priority-high { background-color: #ff5252; box-shadow: 0 0 4px #ff5252; }
-    .priority-medium { background-color: #ffd700; box-shadow: 0 0 4px #ffd700; }
-    .priority-low { background-color: #4caf50; box-shadow: 0 0 4px #4caf50; }
-    
-    /* Priority modal */
-    .modal-overlay {
+    .priority-high { background: #ff5a5a; }
+    .priority-medium { background: #ffbe5a; }
+    .priority-low { background: #5aff7d; }
+    .task-description {
+      font-size: 14px;
+      color: var(--tg-theme-hint-color, #aaaaaa);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .action-btn {
+      background: none;
+      border: none;
+      color: var(--tg-theme-hint-color, #aaaaaa);
+      font-size: 18px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .complete-btn { color: #5aff7d; }
+    .empty-state {
+      text-align: center;
+      color: var(--tg-theme-hint-color, #aaaaaa);
+      padding: 40px 0;
+    }
+    .modal {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.5);
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 1000;
+      z-index: 100;
+      padding: 16px;
+      box-sizing: border-box;
     }
     .modal-content {
-      background: #2a2a2a;
-      padding: 20px;
+      background: var(--tg-theme-secondary-bg-color, #2a2a2a);
       border-radius: 16px;
-      width: 85%;
+      padding: 16px;
+      width: 100%;
       max-width: 300px;
-      animation: fadeIn 0.3s;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .modal-title {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 18px;
     }
-    .priority-selector {
+    .priority-options {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 15px;
+      gap: 8px;
     }
     .priority-option {
       padding: 12px;
       border-radius: 10px;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       cursor: pointer;
-      border: 1px solid #444;
-      transition: all 0.2s;
-      font-weight: 500;
-    }
-    .priority-option.high { 
-      background-color: rgba(255, 82, 82, 0.15);
-      color: #ff5252;
-    }
-    .priority-option.medium { 
-      background-color: rgba(255, 215, 0, 0.15);
-      color: #ffd700;
-    }
-    .priority-option.low { 
-      background-color: rgba(76, 175, 80, 0.15);
-      color: #4caf50;
     }
     .priority-option:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      background: rgba(255, 255, 255, 0.05);
     }
-    .priority-option.selected {
-      border-color: currentColor;
-      font-weight: bold;
-      transform: scale(1.02);
-    }
-    .modal-title {
-      margin-top: 0;
-      text-align: center;
-      font-size: 18px;
+    .priority-option .priority-dot {
+      width: 16px;
+      height: 16px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📝 Список дел</h1>
-    <input type="text" id="taskInput" placeholder="Добавить новую задачу..." maxlength="50" />
-    <button class="btn" onclick="addTask()">➕ Добавить задачу</button>
-    <div id="taskList"></div>
+    <div class="header">
+      <h1>Мои задачи</h1>
+    </div>
+    
+    <div class="add-task">
+      <input type="text" id="taskInput" placeholder="Новая задача..." maxlength="100" />
+      <button class="add-btn" onclick="addTask()">+</button>
+    </div>
+    
+    <div id="taskList" class="task-list">
+      <div class="empty-state">Нет задач</div>
+    </div>
   </div>
 
   <script>
+    // Инициализация Telegram WebApp
     const tg = window.Telegram.WebApp;
     tg.expand();
-    const userId = tg.initDataUnsafe.user?.id || 'anonymous';
-
+    tg.enableClosingConfirmation();
+    
+    // Получаем ID пользователя
+    const userId = tg.initDataUnsafe.user?.id || 'default_user';
+    
+    // Конфигурация Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyANHM115TxFfva5d-oMDKAtPmBF_59OgTA",
       authDomain: "financeai-e9f18.firebaseapp.com",
-      databaseURL: "https://todoapp-e0f58-default-rtdb.europe-west1.firebasedatabase.app/",
+      databaseURL: "https://todoapp-e0f58-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "financeai-e9f18",
       storageBucket: "financeai-e9f18.appspot.com",
       messagingSenderId: "71690881541",
       appId: "1:71690881541:web:c68e6ecf51082dfbedaa6c",
       measurementId: "G-S9T1BR9SEL"
     };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database().ref("users/" + userId + "/tasks");
-
+    
+    // Инициализация Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref(`users/${userId}/tasks`);
+    
+    // Добавление задачи
     async function addTask() {
-      const taskText = document.getElementById("taskInput").value.trim();
-      if (taskText === "") return;
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      input.value = '';
       
       try {
-        const priority = await showPriorityModal();
-        if (priority === null) return; // User cancelled
+        const priority = await selectPriority();
+        if (priority === null) return;
         
-        const newTaskRef = db.push();
-        await newTaskRef.set({
-          text: taskText,
+        const newTask = {
+          text: text,
           completed: false,
-          description: "",
-          createdAt: firebase.database.ServerValue.TIMESTAMP,
-          deadline: null,
-          priority: priority
-        });
-        document.getElementById("taskInput").value = "";
+          priority: priority,
+          createdAt: Date.now()
+        };
+        
+        db.push(newTask);
       } catch (error) {
-        console.error("Error adding task:", error);
+        console.error('Ошибка при добавлении задачи:', error);
+        tg.showAlert('Не удалось добавить задачу');
       }
     }
-
-    function showPriorityModal() {
+    
+    // Выбор приоритета
+    function selectPriority() {
       return new Promise((resolve) => {
-        const modal = document.createElement("div");
-        modal.className = "modal-overlay";
-        
-        const content = document.createElement("div");
-        content.className = "modal-content";
-        content.innerHTML = `
-          <h3 class="modal-title">Выберите приоритет</h3>
-          <div class="priority-selector">
-            <div class="priority-option high" data-priority="high">
-              🔴 Высокий приоритет
-            </div>
-            <div class="priority-option medium" data-priority="medium">
-              🟡 Средний приоритет
-            </div>
-            <div class="priority-option low" data-priority="low">
-              🟢 Низкий приоритет
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <h3 class="modal-title">Выберите приоритет</h3>
+            <div class="priority-options">
+              <div class="priority-option" data-priority="high">
+                <div class="priority-dot priority-high"></div>
+                <span>Высокий</span>
+              </div>
+              <div class="priority-option" data-priority="medium">
+                <div class="priority-dot priority-medium"></div>
+                <span>Средний</span>
+              </div>
+              <div class="priority-option" data-priority="low">
+                <div class="priority-dot priority-low"></div>
+                <span>Низкий</span>
+              </div>
             </div>
           </div>
         `;
         
-        const options = content.querySelectorAll(".priority-option");
+        document.body.appendChild(modal);
+        
+        const options = modal.querySelectorAll('.priority-option');
         options.forEach(option => {
-          option.addEventListener("click", () => {
+          option.addEventListener('click', () => {
             const priority = option.dataset.priority;
             document.body.removeChild(modal);
             resolve(priority);
           });
         });
-        
-        modal.appendChild(content);
-        document.body.appendChild(modal);
-        
-        modal.addEventListener("click", (e) => {
-          if (e.target === modal) {
-            document.body.removeChild(modal);
-            resolve(null);
-          }
-        });
       });
     }
-
-    function formatDate(timestamp) {
-      if (!timestamp) return "Не указано";
-      const date = new Date(timestamp);
-      return date.toLocaleString('ru-RU', {
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit', 
-        minute: '2-digit'
-      });
-    }
-
-    function isOverdue(deadline) {
-      if (!deadline) return false;
-      return new Date(deadline) < new Date();
-    }
-
+    
+    // Отображение задач
     function renderTasks(snapshot) {
-      const taskList = document.getElementById("taskList");
-      taskList.innerHTML = "";
-
+      const taskList = document.getElementById('taskList');
+      taskList.innerHTML = '';
+      
       if (!snapshot.exists()) {
-        taskList.innerHTML = '<p style="text-align: center; color: #666;">Нет задач. Добавьте первую!</p>';
+        taskList.innerHTML = '<div class="empty-state">Нет задач</div>';
         return;
       }
-
+      
       const tasks = [];
-      snapshot.forEach(childSnapshot => {
-        const task = childSnapshot.val();
-        task.key = childSnapshot.key;
-        tasks.push(task);
-      });
-
-      // Sort by: completed status > priority > creation date
-      tasks.sort((a, b) => {
-        if (a.completed === b.completed) {
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
-          const aPriority = priorityOrder[a.priority] || 0;
-          const bPriority = priorityOrder[b.priority] || 0;
-          
-          if (bPriority !== aPriority) {
-            return bPriority - aPriority;
-          }
-          
-          return (b.createdAt || 0) - (a.createdAt || 0);
-        }
-        return a.completed ? 1 : -1;
-      });
-
-      tasks.forEach(task => {
-        const taskDiv = document.createElement("div");
-        taskDiv.className = `task ${task.completed ? "completed" : ""}`;
-        if (!task.completed && isOverdue(task.deadline)) {
-          taskDiv.style.borderLeft = "3px solid #ff5252";
-        }
-
-        const taskContent = document.createElement("div");
-        taskContent.className = "task-content";
-
-        // Task title with priority indicator
-        const title = document.createElement("div");
-        title.className = "task-title";
-        
-        if (task.priority) {
-          const priorityIndicator = document.createElement("span");
-          priorityIndicator.className = `priority-indicator priority-${task.priority}`;
-          title.appendChild(priorityIndicator);
-        }
-        
-        const titleText = document.createElement("span");
-        titleText.textContent = task.text;
-        title.appendChild(titleText);
-        taskContent.appendChild(title);
-
-        // Description
-        if (task.description) {
-          const desc = document.createElement("div");
-          desc.className = "description";
-          desc.textContent = task.description;
-          taskContent.appendChild(desc);
-        }
-
-        // Time info (hidden by default)
-        const timeInfo = document.createElement("div");
-        timeInfo.className = `time-info ${!task.completed && isOverdue(task.deadline) ? "overdue" : ""}`;
-        timeInfo.id = `time-info-${task.key}`;
-        timeInfo.style.display = 'none';
-        timeInfo.innerHTML = `
-          <div>Создано: ${formatDate(task.createdAt)}</div>
-          ${task.deadline ? `<div>Дедлайн: ${formatDate(task.deadline)}</div>` : ''}
-        `;
-        taskContent.appendChild(timeInfo);
-
-        // Actions buttons
-        const actions = document.createElement("div");
-        actions.className = "actions";
-
-        // Time button
-        const timeBtn = document.createElement("button");
-        timeBtn.innerHTML = "⏱";
-        timeBtn.title = "Информация о времени";
-        timeBtn.onclick = (e) => {
-          e.stopPropagation();
-          showTimeInfo(task.key);
-        };
-        actions.appendChild(timeBtn);
-
-        // Complete button
-        const completeBtn = document.createElement("button");
-        completeBtn.className = "complete-btn";
-        completeBtn.innerHTML = task.completed ? "↩" : "✓";
-        completeBtn.title = task.completed ? "Вернуть задачу" : "Завершить задачу";
-        completeBtn.onclick = (e) => {
-          e.stopPropagation();
-          toggleComplete(task.key, !task.completed);
-        };
-        actions.appendChild(completeBtn);
-
-        // Edit button
-        const editBtn = document.createElement("button");
-        editBtn.innerHTML = "✎";
-        editBtn.title = "Редактировать задачу";
-        editBtn.onclick = (e) => {
-          e.stopPropagation();
-          editTask(task.key, task.text, task.description, task.deadline, task.priority);
-        };
-        actions.appendChild(editBtn);
-
-        // Delete button
-        const deleteBtn = document.createElement("button");
-        deleteBtn.innerHTML = "✕";
-        deleteBtn.title = "Удалить задачу";
-        deleteBtn.onclick = (e) => {
-          e.stopPropagation();
-          deleteTask(task.key);
-        };
-        actions.appendChild(deleteBtn);
-
-        taskDiv.appendChild(taskContent);
-        taskDiv.appendChild(actions);
-
-        // Subtasks
-        if (task.subtasks) {
-          const subtaskList = document.createElement("div");
-          subtaskList.className = "subtask-list";
-          
-          Object.entries(task.subtasks).forEach(([subKey, subtask]) => {
-            const subtaskDiv = document.createElement("div");
-            subtaskDiv.className = "subtask";
-            
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = subtask.completed;
-            checkbox.onchange = () => toggleSubtaskComplete(task.key, subKey, checkbox.checked);
-            
-            const subtaskText = document.createElement("span");
-            subtaskText.textContent = subtask.text;
-            if (subtask.completed) {
-              subtaskText.style.textDecoration = "line-through";
-              subtaskText.style.opacity = "0.6";
-            }
-            
-            const subtaskButtons = document.createElement("div");
-            subtaskButtons.className = "subtask-buttons";
-            
-            const editSubBtn = document.createElement("button");
-            editSubBtn.textContent = "✎";
-            editSubBtn.title = "Редактировать подзадачу";
-            editSubBtn.onclick = () => editSubtask(task.key, subKey, subtask.text);
-            
-            const deleteSubBtn = document.createElement("button");
-            deleteSubBtn.textContent = "✕";
-            deleteSubBtn.title = "Удалить подзадачу";
-            deleteSubBtn.onclick = () => deleteSubtask(task.key, subKey);
-            
-            subtaskButtons.appendChild(editSubBtn);
-            subtaskButtons.appendChild(deleteSubBtn);
-            
-            subtaskDiv.appendChild(checkbox);
-            subtaskDiv.appendChild(subtaskText);
-            subtaskDiv.appendChild(subtaskButtons);
-            subtaskList.appendChild(subtaskDiv);
-          });
-          
-          const addSubBtn = document.createElement("button");
-          addSubBtn.className = "btn";
-          addSubBtn.textContent = "+ Добавить подзадачу";
-          addSubBtn.style.marginTop = "8px";
-          addSubBtn.style.padding = "8px";
-          addSubBtn.style.fontSize = "12px";
-          addSubBtn.onclick = () => addSubtask(task.key);
-          
-          subtaskList.appendChild(addSubBtn);
-          taskDiv.appendChild(subtaskList);
-        }
-
-        taskList.appendChild(taskDiv);
-      });
-    }
-
-    function showTimeInfo(key) {
-      const timeInfo = document.getElementById(`time-info-${key}`);
-      if (timeInfo) {
-        timeInfo.style.display = timeInfo.style.display === 'none' ? 'block' : 'none';
-      }
-    }
-
-    function toggleComplete(key, completed) {
-      db.child(key).update({ completed });
-    }
-
-    function deleteTask(key) {
-      if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
-        db.child(key).remove();
-      }
-    }
-
-    async function editTask(key, currentText, currentDescription, currentDeadline, currentPriority) {
-      const newText = prompt("Название задачи:", currentText);
-      if (newText === null) return;
-      
-      const newDesc = prompt("Описание задачи:", currentDescription || "");
-      if (newDesc === null) return;
-      
-      let newDeadline = currentDeadline;
-      const deadlineInput = prompt("Дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ или пусто):",
-        currentDeadline ? formatDate(currentDeadline) : "");
-      
-      if (deadlineInput !== null) {
-        if (deadlineInput.trim() === "") {
-          newDeadline = null;
-        } else {
-          const [datePart, timePart] = deadlineInput.split(' ');
-          const [day, month, year] = datePart.split('.');
-          const [hours, minutes] = timePart ? timePart.split(':') : ['23', '59'];
-          const parsedDate = new Date(year, month - 1, day, hours, minutes);
-          if (!isNaN(parsedDate.getTime())) {
-            newDeadline = parsedDate.getTime();
-          } else {
-            alert("Неверный формат даты! Используйте ДД.ММ.ГГГГ ЧЧ:ММ");
-            return;
-          }
-        }
-      }
-      
-      const newPriority = await showPriorityModal() || currentPriority;
-      if (newPriority === null) return;
-      
-      db.child(key).update({
-        text: newText.trim(),
-        description: newDesc.trim(),
-        deadline: newDeadline,
-        priority: newPriority
-      });
-    }
-
-    function addSubtask(taskKey) {
-      const text = prompt("Текст подзадачи:");
-      if (!text) return;
-      const subtaskRef = db.child(`${taskKey}/subtasks`).push();
-      subtaskRef.set({ 
-        text: text.trim(), 
-        completed: false 
-      });
-    }
-
-    function toggleSubtaskComplete(taskKey, subKey, completed) {
-      db.child(`${taskKey}/subtasks/${subKey}`).update({ completed });
-    }
-
-    function editSubtask(taskKey, subKey, currentText) {
-      const newText = prompt("Изменить подзадачу:", currentText);
-      if (newText !== null) {
-        db.child(`${taskKey}/subtasks/${subKey}`).update({ 
-          text: newText.trim() 
+      snapshot.forEach(child => {
+        tasks.push({
+          id: child.key,
+          ...child.val()
         });
-      }
+      });
+      
+      // Сортировка: сначала невыполненные, затем по приоритету
+      tasks.sort((a, b) => {
+        if (a.completed !== b.completed) {
+          return a.completed ? 1 : -1;
+        }
+        
+        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+      });
+      
+      tasks.forEach(task => {
+        const taskElement = document.createElement('div');
+        taskElement.className = `task ${task.completed ? 'completed' : ''}`;
+        taskElement.innerHTML = `
+          <div class="task-content">
+            <div class="task-title ${task.completed ? 'completed' : ''}">
+              <div class="priority-dot priority-${task.priority || 'medium'}"></div>
+              <span>${task.text}</span>
+            </div>
+            ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+          </div>
+          <div class="task-actions">
+            <button class="action-btn complete-btn" onclick="toggleTask('${task.id}', ${!task.completed})">
+              ${task.completed ? '↻' : '✓'}
+            </button>
+            <button class="action-btn" onclick="deleteTask('${task.id}')">✕</button>
+          </div>
+        `;
+        
+        taskList.appendChild(taskElement);
+      });
     }
-
-    function deleteSubtask(taskKey, subKey) {
-      if (confirm("Удалить подзадачу?")) {
-        db.child(`${taskKey}/subtasks/${subKey}`).remove();
-      }
+    
+    // Переключение статуса задачи
+    function toggleTask(id, completed) {
+      db.child(id).update({ completed });
     }
-
-    // Initialize
-    db.on("value", renderTasks, (error) => {
-      console.error("Ошибка загрузки задач:", error);
-    });
-
-    // Telegram back button
-    if (tg && tg.BackButton) {
-      tg.BackButton.onClick(() => tg.close());
+    
+    // Удаление задачи
+    function deleteTask(id) {
+      tg.showConfirm('Удалить задачу?', (confirmed) => {
+        if (confirmed) {
+          db.child(id).remove();
+        }
+      });
     }
-
-    // Handle Enter key for adding tasks
-    document.getElementById("taskInput").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
+    
+    // Обработка нажатия Enter
+    document.getElementById('taskInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
         addTask();
       }
     });
+    
+    // Слушаем изменения в базе данных
+    db.on('value', renderTasks);
+    
+    // Закрытие WebApp при нажатии кнопки "Назад"
+    tg.BackButton.onClick(() => {
+      tg.close();
+    });
+    
+    // Показываем кнопку "Назад"
+    tg.BackButton.show();
   </script>
 </body>
 </html>
