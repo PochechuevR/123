@@ -2,11 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Задачи</title>
-  <link rel="stylesheet" href="styles.css">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ToDo Web3</title>
+  <title>ToDo App with Priorities</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -20,6 +17,7 @@
       align-items: center;
       min-height: 100vh;
       margin: 0;
+      touch-action: manipulation;
     }
     .container {
       background: #1e1e1e;
@@ -27,11 +25,13 @@
       border-radius: 20px;
       width: 90%;
       max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     h1 {
       font-size: 22px;
       text-align: center;
       margin-bottom: 20px;
+      color: #00A8FF;
     }
     input {
       width: 100%;
@@ -65,6 +65,8 @@
       text-overflow: ellipsis;
       max-width: 100%;
       margin-bottom: 4px;
+      display: flex;
+      align-items: center;
     }
     .btn {
       width: 100%;
@@ -76,22 +78,28 @@
       font-size: 16px;
       cursor: pointer;
       margin-bottom: 15px;
+      transition: background 0.2s;
     }
     .btn:hover {
       background: #0088CC;
     }
     .task {
       background: #2A2A2A;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 10px;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: all 0.2s;
+    }
+    .task:hover {
+      background: #333;
     }
     .task.completed {
       text-decoration: line-through;
       opacity: 0.6;
+      background: #252525;
     }
     .task-content {
       flex-grow: 1;
@@ -101,18 +109,21 @@
     .actions {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
     .actions button {
       background: none;
       border: none;
       cursor: pointer;
       font-size: 16px;
-      padding: 4px;
+      padding: 6px;
+      min-width: 30px;
+      border-radius: 6px;
+      transition: all 0.2s;
     }
-    .actions button:nth-child(1) { color: #aaa; }
-    .actions button:nth-child(3) { color: #FFD700; }
-    .actions button:nth-child(4) { color: #FF5252; }
+    .actions button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
     .complete-btn { color: #00FF90; }
     .overdue { color: #ff6b6b !important; }
     .subtask-list {
@@ -126,10 +137,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin: 4px 0;
+      margin: 6px 0;
     }
     .subtask input[type="checkbox"] {
-      margin-right: 6px;
+      margin-right: 8px;
+      cursor: pointer;
     }
     .subtask-buttons button {
       background: none;
@@ -138,14 +150,94 @@
       color: #aaa;
       font-size: 13px;
       margin-left: 6px;
+      padding: 2px;
+    }
+    /* Priority styles */
+    .priority-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .priority-high { background-color: #ff5252; box-shadow: 0 0 4px #ff5252; }
+    .priority-medium { background-color: #ffd700; box-shadow: 0 0 4px #ffd700; }
+    .priority-low { background-color: #4caf50; box-shadow: 0 0 4px #4caf50; }
+    
+    /* Priority modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 16px;
+      width: 85%;
+      max-width: 300px;
+      animation: fadeIn 0.3s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .priority-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .priority-option {
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid #444;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .priority-option.high { 
+      background-color: rgba(255, 82, 82, 0.15);
+      color: #ff5252;
+    }
+    .priority-option.medium { 
+      background-color: rgba(255, 215, 0, 0.15);
+      color: #ffd700;
+    }
+    .priority-option.low { 
+      background-color: rgba(76, 175, 80, 0.15);
+      color: #4caf50;
+    }
+    .priority-option:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .priority-option.selected {
+      border-color: currentColor;
+      font-weight: bold;
+      transform: scale(1.02);
+    }
+    .modal-title {
+      margin-top: 0;
+      text-align: center;
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Список дел</h1>
-    <input type="text" id="taskInput" placeholder="Новая задача..." maxlength="22" />
-    <button class="btn" onclick="addTask()">Добавить</button>
+    <h1>📝 Список дел</h1>
+    <input type="text" id="taskInput" placeholder="Добавить новую задачу..." maxlength="50" />
+    <button class="btn" onclick="addTask()">➕ Добавить задачу</button>
     <div id="taskList"></div>
   </div>
 
@@ -168,18 +260,70 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database().ref("users/" + userId + "/tasks");
 
-    function addTask() {
+    async function addTask() {
       const taskText = document.getElementById("taskInput").value.trim();
       if (taskText === "") return;
-      const newTaskRef = db.push();
-      newTaskRef.set({
-        text: taskText,
-        completed: false,
-        description: "",
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        deadline: null
+      
+      try {
+        const priority = await showPriorityModal();
+        if (priority === null) return; // User cancelled
+        
+        const newTaskRef = db.push();
+        await newTaskRef.set({
+          text: taskText,
+          completed: false,
+          description: "",
+          createdAt: firebase.database.ServerValue.TIMESTAMP,
+          deadline: null,
+          priority: priority
+        });
+        document.getElementById("taskInput").value = "";
+      } catch (error) {
+        console.error("Error adding task:", error);
+      }
+    }
+
+    function showPriorityModal() {
+      return new Promise((resolve) => {
+        const modal = document.createElement("div");
+        modal.className = "modal-overlay";
+        
+        const content = document.createElement("div");
+        content.className = "modal-content";
+        content.innerHTML = `
+          <h3 class="modal-title">Выберите приоритет</h3>
+          <div class="priority-selector">
+            <div class="priority-option high" data-priority="high">
+              🔴 Высокий приоритет
+            </div>
+            <div class="priority-option medium" data-priority="medium">
+              🟡 Средний приоритет
+            </div>
+            <div class="priority-option low" data-priority="low">
+              🟢 Низкий приоритет
+            </div>
+          </div>
+        `;
+        
+        const options = content.querySelectorAll(".priority-option");
+        options.forEach(option => {
+          option.addEventListener("click", () => {
+            const priority = option.dataset.priority;
+            document.body.removeChild(modal);
+            resolve(priority);
+          });
+        });
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            document.body.removeChild(modal);
+            resolve(null);
+          }
+        });
       });
-      document.getElementById("taskInput").value = "";
     }
 
     function formatDate(timestamp) {
@@ -203,6 +347,11 @@
       const taskList = document.getElementById("taskList");
       taskList.innerHTML = "";
 
+      if (!snapshot.exists()) {
+        taskList.innerHTML = '<p style="text-align: center; color: #666;">Нет задач. Добавьте первую!</p>';
+        return;
+      }
+
       const tasks = [];
       snapshot.forEach(childSnapshot => {
         const task = childSnapshot.val();
@@ -210,8 +359,17 @@
         tasks.push(task);
       });
 
+      // Sort by: completed status > priority > creation date
       tasks.sort((a, b) => {
         if (a.completed === b.completed) {
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          const aPriority = priorityOrder[a.priority] || 0;
+          const bPriority = priorityOrder[b.priority] || 0;
+          
+          if (bPriority !== aPriority) {
+            return bPriority - aPriority;
+          }
+          
           return (b.createdAt || 0) - (a.createdAt || 0);
         }
         return a.completed ? 1 : -1;
@@ -219,17 +377,30 @@
 
       tasks.forEach(task => {
         const taskDiv = document.createElement("div");
-        taskDiv.className = "task" + (task.completed ? " completed" : "");
-        const deadlineClass = !task.completed && isOverdue(task.deadline) ? "overdue" : "";
+        taskDiv.className = `task ${task.completed ? "completed" : ""}`;
+        if (!task.completed && isOverdue(task.deadline)) {
+          taskDiv.style.borderLeft = "3px solid #ff5252";
+        }
 
         const taskContent = document.createElement("div");
         taskContent.className = "task-content";
 
+        // Task title with priority indicator
         const title = document.createElement("div");
         title.className = "task-title";
-        title.textContent = task.text;
+        
+        if (task.priority) {
+          const priorityIndicator = document.createElement("span");
+          priorityIndicator.className = `priority-indicator priority-${task.priority}`;
+          title.appendChild(priorityIndicator);
+        }
+        
+        const titleText = document.createElement("span");
+        titleText.textContent = task.text;
+        title.appendChild(titleText);
         taskContent.appendChild(title);
 
+        // Description
         if (task.description) {
           const desc = document.createElement("div");
           desc.className = "description";
@@ -237,41 +408,66 @@
           taskContent.appendChild(desc);
         }
 
+        // Time info (hidden by default)
         const timeInfo = document.createElement("div");
-        timeInfo.className = "time-info " + deadlineClass;
+        timeInfo.className = `time-info ${!task.completed && isOverdue(task.deadline) ? "overdue" : ""}`;
         timeInfo.id = `time-info-${task.key}`;
         timeInfo.style.display = 'none';
-        timeInfo.textContent = `Создано: ${formatDate(task.createdAt)}` + 
-          (task.deadline ? ` | Дедлайн: ${formatDate(task.deadline)}` : "");
+        timeInfo.innerHTML = `
+          <div>Создано: ${formatDate(task.createdAt)}</div>
+          ${task.deadline ? `<div>Дедлайн: ${formatDate(task.deadline)}</div>` : ''}
+        `;
         taskContent.appendChild(timeInfo);
 
+        // Actions buttons
         const actions = document.createElement("div");
         actions.className = "actions";
 
+        // Time button
         const timeBtn = document.createElement("button");
         timeBtn.innerHTML = "⏱";
-        timeBtn.onclick = () => showTimeInfo(task.key);
+        timeBtn.title = "Информация о времени";
+        timeBtn.onclick = (e) => {
+          e.stopPropagation();
+          showTimeInfo(task.key);
+        };
         actions.appendChild(timeBtn);
 
+        // Complete button
         const completeBtn = document.createElement("button");
         completeBtn.className = "complete-btn";
         completeBtn.innerHTML = task.completed ? "↩" : "✓";
-        completeBtn.onclick = () => toggleComplete(task.key, !task.completed);
+        completeBtn.title = task.completed ? "Вернуть задачу" : "Завершить задачу";
+        completeBtn.onclick = (e) => {
+          e.stopPropagation();
+          toggleComplete(task.key, !task.completed);
+        };
         actions.appendChild(completeBtn);
 
+        // Edit button
         const editBtn = document.createElement("button");
         editBtn.innerHTML = "✎";
-        editBtn.onclick = () => editTask(task.key, task.text, task.description, task.deadline);
+        editBtn.title = "Редактировать задачу";
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          editTask(task.key, task.text, task.description, task.deadline, task.priority);
+        };
         actions.appendChild(editBtn);
 
+        // Delete button
         const deleteBtn = document.createElement("button");
         deleteBtn.innerHTML = "✕";
-        deleteBtn.onclick = () => deleteTask(task.key);
+        deleteBtn.title = "Удалить задачу";
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteTask(task.key);
+        };
         actions.appendChild(deleteBtn);
 
         taskDiv.appendChild(taskContent);
         taskDiv.appendChild(actions);
 
+        // Subtasks
         if (task.subtasks) {
           const subtaskList = document.createElement("div");
           subtaskList.className = "subtask-list";
@@ -297,10 +493,12 @@
             
             const editSubBtn = document.createElement("button");
             editSubBtn.textContent = "✎";
+            editSubBtn.title = "Редактировать подзадачу";
             editSubBtn.onclick = () => editSubtask(task.key, subKey, subtask.text);
             
             const deleteSubBtn = document.createElement("button");
             deleteSubBtn.textContent = "✕";
+            deleteSubBtn.title = "Удалить подзадачу";
             deleteSubBtn.onclick = () => deleteSubtask(task.key, subKey);
             
             subtaskButtons.appendChild(editSubBtn);
@@ -314,9 +512,9 @@
           
           const addSubBtn = document.createElement("button");
           addSubBtn.className = "btn";
-          addSubBtn.textContent = "+ Подзадача";
+          addSubBtn.textContent = "+ Добавить подзадачу";
           addSubBtn.style.marginTop = "8px";
-          addSubBtn.style.padding = "6px";
+          addSubBtn.style.padding = "8px";
           addSubBtn.style.fontSize = "12px";
           addSubBtn.onclick = () => addSubtask(task.key);
           
@@ -330,7 +528,9 @@
 
     function showTimeInfo(key) {
       const timeInfo = document.getElementById(`time-info-${key}`);
-      timeInfo.style.display = timeInfo.style.display === 'none' ? 'block' : 'none';
+      if (timeInfo) {
+        timeInfo.style.display = timeInfo.style.display === 'none' ? 'block' : 'none';
+      }
     }
 
     function toggleComplete(key, completed) {
@@ -343,14 +543,17 @@
       }
     }
 
-    function editTask(key, currentText, currentDescription, currentDeadline) {
+    async function editTask(key, currentText, currentDescription, currentDeadline, currentPriority) {
       const newText = prompt("Название задачи:", currentText);
       if (newText === null) return;
-      const newDesc = prompt("Описание задачи:", currentDescription);
+      
+      const newDesc = prompt("Описание задачи:", currentDescription || "");
       if (newDesc === null) return;
+      
       let newDeadline = currentDeadline;
       const deadlineInput = prompt("Дедлайн (ДД.ММ.ГГГГ ЧЧ:ММ или пусто):",
         currentDeadline ? formatDate(currentDeadline) : "");
+      
       if (deadlineInput !== null) {
         if (deadlineInput.trim() === "") {
           newDeadline = null;
@@ -362,15 +565,20 @@
           if (!isNaN(parsedDate.getTime())) {
             newDeadline = parsedDate.getTime();
           } else {
-            alert("Неверный формат даты!");
+            alert("Неверный формат даты! Используйте ДД.ММ.ГГГГ ЧЧ:ММ");
             return;
           }
         }
       }
+      
+      const newPriority = await showPriorityModal() || currentPriority;
+      if (newPriority === null) return;
+      
       db.child(key).update({
         text: newText.trim(),
         description: newDesc.trim(),
-        deadline: newDeadline
+        deadline: newDeadline,
+        priority: newPriority
       });
     }
 
@@ -378,7 +586,10 @@
       const text = prompt("Текст подзадачи:");
       if (!text) return;
       const subtaskRef = db.child(`${taskKey}/subtasks`).push();
-      subtaskRef.set({ text: text.trim(), completed: false });
+      subtaskRef.set({ 
+        text: text.trim(), 
+        completed: false 
+      });
     }
 
     function toggleSubtaskComplete(taskKey, subKey, completed) {
@@ -388,7 +599,9 @@
     function editSubtask(taskKey, subKey, currentText) {
       const newText = prompt("Изменить подзадачу:", currentText);
       if (newText !== null) {
-        db.child(`${taskKey}/subtasks/${subKey}`).update({ text: newText.trim() });
+        db.child(`${taskKey}/subtasks/${subKey}`).update({ 
+          text: newText.trim() 
+        });
       }
     }
 
@@ -398,11 +611,22 @@
       }
     }
 
+    // Initialize
     db.on("value", renderTasks, (error) => {
       console.error("Ошибка загрузки задач:", error);
     });
 
-    tg.BackButton.onClick(() => tg.close());
+    // Telegram back button
+    if (tg && tg.BackButton) {
+      tg.BackButton.onClick(() => tg.close());
+    }
+
+    // Handle Enter key for adding tasks
+    document.getElementById("taskInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        addTask();
+      }
+    });
   </script>
 </body>
 </html>
